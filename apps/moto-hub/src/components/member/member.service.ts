@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  Inject,
   Injectable,
   InternalServerErrorException,
 } from "@nestjs/common";
@@ -12,19 +11,23 @@ import { MemberStatus } from "../../libs/enums/member.enum";
 import { Message } from "../../libs/enums/common.enum";
 import { AuthService } from "../auth/auth.service";
 
+
 @Injectable()
 export class MemberService {
   constructor(
     @InjectModel("Member") private readonly memberModel: Model<Member>,
-    private  authService:AuthService
+       private authService:AuthService,
   ) {}
 
   public async signup(input: MemberInput): Promise<Member> {
-    // TODO: HASH PASSWORD
+    //TODO: hashing passwords
     input.memberPassword = await this.authService.hasPassword(input.memberPassword);
     try {
       const result = await this.memberModel.create(input);
       // TODO: Authentication via Token
+       result.accessToken = await this.authService.createToken(result);
+       
+
       return result;
     } catch (err) {
       console.log("Error,Service.model:", err.message);
@@ -43,11 +46,10 @@ export class MemberService {
     } else if (response.memberStatus === MemberStatus.BLOCK) {
       throw new InternalServerErrorException(Message.BLOCKED_USER);
     }
-    //TODO: Compare Password via bcrypt
-    console.log("response:", response);
-    const isMatch = await this.authService.comparePasswords(input.memberPassword,response.memberPassword);
-    if (!isMatch)
-      throw new InternalServerErrorException(Message.WRONG_PASSWORD);
+
+    const isMatch = await this.authService.comparePasswords(input.memberPassword, response.memberPassword);
+		if (!isMatch) throw new InternalServerErrorException(Message.WRONG_PASSWORD);
+		response.accessToken = await this.authService.createToken(response);
 
     return response;
   }
