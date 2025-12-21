@@ -11,6 +11,7 @@ import { MemberStatus } from "../../libs/enums/member.enum";
 import { Message } from "../../libs/enums/common.enum";
 import { AuthService } from "../auth/auth.service";
 import { MemberUpdate } from "../../libs/dto/member/member.update";
+import { T } from "../../libs/types/common";
 
 
 @Injectable()
@@ -54,7 +55,7 @@ export class MemberService {
 
     return response;
   };
-  
+
 
  	public async updateMember(memberId: ObjectId, input: MemberUpdate): Promise<Member> {
 		const result: Member = await this.memberModel
@@ -66,7 +67,40 @@ export class MemberService {
 		return result;
 	};
 
-  public async getMember(): Promise<String> {
-    return "getMember executed";
+	public async getMember(memberId: ObjectId, targetId: ObjectId): Promise<Member> {
+		const search: T = {
+			_id: targetId,
+			memberStatus: {
+				$in: [MemberStatus.ACTIVE, MemberStatus.BLOCK],
+			},
+		};
+		const targetMember = await this.memberModel.findOne(search).lean().exec();
+		if (!targetMember) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
+
+		// if (memberId) {
+		// 	const viewInput: ViewInput = { memberId: memberId, viewRefId: targetId, viewGroup: ViewGroup.MEMBER };
+		// 	const newView = await this.viewService.recordView(viewInput);
+
+		// 	if (newView) {
+		// 		await this.memberModel.findOneAndUpdate(search, { $inc: { memberViews: 1 } }, { new: true }).exec();
+		// 		targetMember.memberViews++;
+		// 	}
+			//  meliked
+	// 		const LikeInput = { memberId: memberId, likeRefId: targetId, likeGroup: LikeGroup.MEMBER };
+	// 		targetMember.meLiked = await this.likeService.checkLikeExistence(LikeInput);
+	// 		//  mefollowed
+
+	// 		targetMember.meFollowed = await this.checkSubscription(memberId, targetId);
+	// 	}
+
+	// 	return targetMember;
+	// }
+
+	// private async checkSubscription(followerId: ObjectId, followingId: ObjectId): Promise<MeFollowed[]> {
+	// 	const result = await this.followModel.findOne({ followingId: followingId, followerId: followerId }).exec();
+	// 	return result ? [{ followerId: followerId, followingId: followingId, myFollowing: true }] : [];
+	// }
+  	return targetMember;
   }
+
 }
