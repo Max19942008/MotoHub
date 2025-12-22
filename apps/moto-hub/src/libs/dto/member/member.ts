@@ -85,3 +85,29 @@ export class Member {
    @Field(() => String,{nullable:true})
    accessToken?: string; 
 }
+
+   /** from aggregration **/
+// @Field(() => [MeLiked], {nullable: true})
+// meLiked?: MeLiked[];
+
+// @Field(() => [MeFollowed], {nullable: true})
+// meFollowed?: MeFollowed[];
+// }
+
+
+
+
+@ObjectType()
+export class TotalCounter {
+  @Field(() => Int, {nullable: true})
+  total?: number;
+}
+
+@ObjectType()
+export class Members {
+  @Field(() => [Member])
+  list: Member[];
+
+  @Field(() => [TotalCounter], {nullable: true})
+  metaCounter: TotalCounter[];
+}
