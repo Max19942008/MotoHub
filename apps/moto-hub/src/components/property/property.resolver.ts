@@ -11,8 +11,8 @@ import { WithoutGuard } from '../auth/guards/without.guard';
 import { shapeIntoMongoObjectId } from '../../libs/config';
 // import { PropertyUpdate } from '../../libs/dto/property/property.update';
 import { AuthGuard } from '../auth/guards/auth.guard';
-import { Property } from '../../libs/dto/property/property';
-import { PropertyInput } from '../../libs/dto/property/property.input';
+import { Properties, Property } from '../../libs/dto/property/property';
+import { PropertiesInquiry, PropertyInput } from '../../libs/dto/property/property.input';
 import { PropertyUpdate } from '../../libs/dto/property/property.update';
 
 @Resolver()
@@ -56,15 +56,15 @@ public async updateProperty(
 };
 
 
-//  @UseGuards(WithoutGuard)
-//  @Query(() => Properties)
-//  public async getProperties (
-//    @Args("input") input: PropertiesInquiry,
-//    @AuthMember("_id") memberId: ObjectId,
-//  ):Promise<Properties> {
-//  console.log("Query: getProperties");
-//  return await this.propertyService.getProperties(memberId, input);
-// }
+ @UseGuards(WithoutGuard)
+ @Query(() => Properties)
+ public async getProperties (
+   @Args("input") input: PropertiesInquiry,
+   @AuthMember("_id") memberId: ObjectId,
+ ):Promise<Properties> {
+ console.log("Query: getProperties");
+ return await this.propertyService.getProperties(memberId, input);
+};
 
 
 //  @UseGuards(AuthGuard)
