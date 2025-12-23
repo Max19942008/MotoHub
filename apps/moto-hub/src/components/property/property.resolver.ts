@@ -29,18 +29,18 @@ export class PropertyResolver {
     input.memberId = memberId;
     return await this.propertyService.createProperty(input);
   };
-  
 
-//  @UseGuards(WithoutGuard)
-//  @Query((returns) => Property)
-//  public async getProperty(
-//   @Args('propertyId') input: string,
-//   @AuthMember('_id') memberId: ObjectId,
-// ): Promise<Property> {
-//   console.log('Query: getProperty');
-//   const propertyId = shapeIntoMongoObjectId(input);
-//   return await this.propertyService.getProperty(memberId, propertyId);
-// }
+
+ @UseGuards(WithoutGuard)
+ @Query((returns) => Property)
+ public async getProperty(
+  @Args('propertyId') input: string,
+  @AuthMember('_id') memberId: ObjectId,
+): Promise<Property> {
+  console.log('Query: getProperty');
+  const propertyId = shapeIntoMongoObjectId(input);
+  return await this.propertyService.getProperty(memberId, propertyId);
+}
  
 // @Roles(MemberType.AGENT)
 // @UseGuards(RolesGuard)
