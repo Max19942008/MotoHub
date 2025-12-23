@@ -73,12 +73,10 @@ propertyBarter?: boolean;
 @Field(() => Boolean, { nullable: true })
 propertyRent?: boolean;
 
-@IsOptional()
-@Field(() => Date, {nullable:true})
+
 soldAt?: Date;
 
-@IsOptional()
-@Field(() => Date, {nullable:true})
+
 deletedAt?: Date;
 
 @IsOptional()

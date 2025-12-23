@@ -9,6 +9,8 @@ import { PropertyStatus } from '../../libs/enums/property.enum';
 import { ViewGroup } from '../../libs/enums/view.enum';
 import { PropertyInput } from '../../libs/dto/property/property.input';
 import { StatisticModifier, T } from '../../libs/types/common';
+import { PropertyUpdate } from '../../libs/dto/property/property.update';
+import * as moment from 'moment';
 
 
 
@@ -58,6 +60,29 @@ export class PropertyService {
     targetProperty.memberData = await this.memberService.getMember(null, targetProperty.memberId);
     return targetProperty;
   };
+
+  
+	public async updateProperty(memberId: ObjectId, input: PropertyUpdate): Promise<Property> {
+		let { propertyStatus, soldAt, deletedAt } = input;
+		const search = { _id: input._id, memberId,propertyStatus:PropertyStatus.ACTIVE};
+
+		if (propertyStatus === PropertyStatus.SOLD) soldAt = moment().toDate();
+		else if (propertyStatus === PropertyStatus.DELETE) deletedAt = moment().toDate();
+
+		const result = await this.propertyModel.findOneAndUpdate(search, input, { new: true }).exec();
+
+		if (!result) throw new InternalServerErrorException(Message.UPDATE_FAILED);
+
+		if (soldAt || deletedAt) {
+			await this.memberService.memberStatsEditer({
+				_id: memberId,
+				targetKey: 'memberProperties',
+				modifier: -1,
+			});
+		}
+
+		return result;
+	};
 
 
     public async  propertyStatsEditor(input:StatisticModifier):Promise<Property> {
