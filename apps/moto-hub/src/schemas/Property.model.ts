@@ -24,10 +24,11 @@ const PropertySchema = new Schema(
 		propertyBrand: {
     type:String,
 		enum:PropertyBrand,
+		required: true,
 		},
 
 		propertyCondition: {
-			type: Number,
+			type: String,
 			enum:PropertyCondition,
 			required: true,
 		},
