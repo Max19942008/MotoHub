@@ -12,7 +12,7 @@ import { shapeIntoMongoObjectId } from '../../libs/config';
 // import { PropertyUpdate } from '../../libs/dto/property/property.update';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { Properties, Property } from '../../libs/dto/property/property';
-import { PropertiesInquiry, PropertyInput } from '../../libs/dto/property/property.input';
+import { AgentPropertiesInquiry, PropertiesInquiry, PropertyInput } from '../../libs/dto/property/property.input';
 import { PropertyUpdate } from '../../libs/dto/property/property.update';
 
 @Resolver()
@@ -67,6 +67,18 @@ public async updateProperty(
 };
 
 
+@Roles(MemberType.AGENT)
+@UseGuards(RolesGuard)
+@Query((returns) => Properties)
+public async getAgentProperties (
+  @Args("input") input: AgentPropertiesInquiry,
+  @AuthMember("_id") memberId: ObjectId,
+): Promise<Properties> {
+  console.log("Query:getAgentProperties");
+  return await this.propertyService.getAgentProperties(memberId, input);
+}
+
+
 //  @UseGuards(AuthGuard)
 //  @Query(() => Properties)
 //  public async getFavorites (
@@ -88,16 +100,7 @@ public async updateProperty(
 // }
 
 
-// @Roles(MemberType.AGENT)
-// @UseGuards(RolesGuard)
-// @Query((returns) => Properties)
-// public async getAgentProperties (
-//   @Args("input") input: AgentPropertiesInquiry,
-//   @AuthMember("_id") memberId: ObjectId,
-// ): Promise<Properties> {
-//   console.log("Query:getAgentProperties");
-//   return await this.propertyService.getAgentProperties(memberId, input);
-// }
+
 
 //  @UseGuards(AuthGuard)
 //  @Mutation(() => Property)
