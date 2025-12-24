@@ -20,48 +20,50 @@ export class BoardArticleResolver {
   constructor(private readonly boardArticleService: BoardArticleService) {}
 
 
-  // @UseGuards(AuthGuard)
-  // @Mutation(() => BoardArticle)
-  // public async createBoardArticle (
-  //   @Args('input') input: BoardArticleInput,
-  //   @AuthMember('_id') memberId: ObjectId,
-  // ):Promise<BoardArticle> {
-  //   console.log('Mutation: createBoardArticle');
-  //   return await this.boardArticleService.createBoardArticle(input, memberId);
-  // }
+  @UseGuards(AuthGuard)
+  @Mutation(() => BoardArticle)
+  public async createBoardArticle (
+    @Args('input') input: BoardArticleInput,
+    @AuthMember('_id') memberId: ObjectId,
+  ):Promise<BoardArticle> {
+    console.log('Mutation: createBoardArticle');
+    return await this.boardArticleService.createBoardArticle(input, memberId);
+  };
 
-  //  @UseGuards(WithoutGuard)
-  //  @Query(() => BoardArticle)
-  //  public async getBoardArticle (
-  //   @Args('articleId') input: string,
-  //   @AuthMember('_id') memberId: ObjectId,
-  // ):Promise<BoardArticle> {
-  //   console.log('Query: getBoardArticle');
-  //   const articleId = shapeIntoMongoObjectId(input);
-  //   return await this.boardArticleService.getBoardArticle( memberId, articleId);
-  // };
+   @UseGuards(WithoutGuard)
+   @Query(() => BoardArticle)
+   public async getBoardArticle (
+    @Args('articleId') input: string,
+    @AuthMember('_id') memberId: ObjectId,
+  ):Promise<BoardArticle> {
+    console.log('Query: getBoardArticle');
+    const articleId = shapeIntoMongoObjectId(input);
+    return await this.boardArticleService.getBoardArticle( memberId, articleId);
+  };
 
-  //  @UseGuards(AuthGuard)
-  //  @Mutation(() => BoardArticle)
-  // public async updateBoardArticle (
-  //   @Args('input') input: BoardArticleUpdate,
-  //   @AuthMember('_id') memberId: ObjectId,
-  // ):Promise<BoardArticle> {
-  //   console.log('Mutation: updateBoardArticle');
-  //   input._id = shapeIntoMongoObjectId(input._id);
-  //   return await this.boardArticleService.updateBoardArticle(memberId,input);
-  // }
+   @UseGuards(AuthGuard)
+   @Mutation(() => BoardArticle)
+  public async updateBoardArticle (
+    @Args('input') input: BoardArticleUpdate,
+    @AuthMember('_id') memberId: ObjectId,
+  ):Promise<BoardArticle> {
+    console.log('Mutation: updateBoardArticle');
+    input._id = shapeIntoMongoObjectId(input._id);
+    return await this.boardArticleService.updateBoardArticle(memberId,input);
+  };
 
 
-  //  @UseGuards(WithoutGuard)
-  //  @Query(() => BoardArticles)
-  //  public async getBoardArticles (
-  //   @Args('input') input: BoardArticlesInquiry,
-  //   @AuthMember('_id') memberId: ObjectId,
-  // ):Promise<BoardArticles> {
-  //   console.log('Query: getBoardArticles');
-  //   return await this.boardArticleService.getBoardArticles(memberId, input);
-  // };
+
+   @UseGuards(WithoutGuard)
+   @Query(() => BoardArticles)
+   public async getBoardArticles (
+    @Args('input') input: BoardArticlesInquiry,
+    @AuthMember('_id') memberId: ObjectId,
+  ):Promise<BoardArticles> {
+    console.log('Query: getBoardArticles');
+    return await this.boardArticleService.getBoardArticles(memberId, input);
+  };
+  
 
 
   //  @UseGuards(AuthGuard)
