@@ -11,7 +11,7 @@ import { BoardArticleStatus } from '../../libs/enums/board-article.enum';
 import { ViewGroup } from '../../libs/enums/view.enum';
 import { BoardArticleUpdate } from '../../libs/dto/board-article/board-article.update';
 import { lookupAuthMemberLiked, lookupMember, shapeIntoMongoObjectId } from '../../libs/config';
-import { skip } from 'node:test';
+
 
 
 @Injectable()
@@ -56,7 +56,7 @@ export class BoardArticleService {
       }
       // meliked
       //  const LikeInput = { memberId: memberId, likeRefId: articleId, likeGroup: LikeGroup.PROPERTY};
-      //     targetBoardArticle.meLiked = await this.likeService.checkLikeExistence(LikeInput);
+      //  targetBoardArticle.meLiked = await this.likeService.checkLikeExistence(LikeInput);
     }
     targetBoardArticle.memberData = await this.memberService.getMember(null, targetBoardArticle.memberId);
     return targetBoardArticle;
