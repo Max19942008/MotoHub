@@ -102,15 +102,15 @@ public async getAgentProperties (
 
 
 
-//  @UseGuards(AuthGuard)
-//  @Mutation(() => Property)
-//    public async likeTargetProperty (
-//   @Args('propertyId') input: string,
-//   @AuthMember('_id') memberId: ObjectId ) :Promise<Property> {
-//      console.log("Mutation: likeTargetMember");
-//      const likeRefId = shapeIntoMongoObjectId(input);
-//      return await this.propertyService.likeTargetProperty(memberId, likeRefId);
-//   }
+ @UseGuards(AuthGuard)
+ @Mutation(() => Property)
+   public async likeTargetProperty (
+  @Args('propertyId') input: string,
+  @AuthMember('_id') memberId: ObjectId ) :Promise<Property> {
+     console.log("Mutation: likeTargetMember");
+     const likeRefId = shapeIntoMongoObjectId(input);
+     return await this.propertyService.likeTargetProperty(memberId, likeRefId);
+  }
 
 /** ADMIN **/
 
@@ -142,5 +142,7 @@ public async removePropertyByAdmin(@Args('propertyId') input: string): Promise<P
   return await this.propertyService.removePropertyByAdmin(propertyId);
 
 };
+
+
 
 }
