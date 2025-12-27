@@ -7,6 +7,7 @@ import { LikeModule } from './like/like.module';
 import { ViewModule } from './view/view.module';
 import { BoardArticleModule } from './board-article/board-article.module';
 
+
 @Module({
   imports: [
     MemberModule, 
@@ -15,6 +16,7 @@ import { BoardArticleModule } from './board-article/board-article.module';
     CommentModule, 
     LikeModule, 
     ViewModule, 
-    BoardArticleModule]
+    BoardArticleModule],
+  providers: []
 })
 export class ComponentsModule {}

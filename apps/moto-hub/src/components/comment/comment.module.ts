@@ -1,4 +1,31 @@
 import { Module } from '@nestjs/common';
+import { AuthModule } from '../auth/auth.module';
+import { ViewModule } from '../view/view.module';
+import { MemberModule } from '../member/member.module';
+import { PropertyModule } from '../property/property.module';
+import { CommentResolver } from './comment.resolver';
+import { CommentService } from './comment.service';
+import { MongooseModule } from '@nestjs/mongoose';
+import CommentSchema from '../../schemas/Comment.model';
+import { BoardArticleService } from '../board-article/board-article.service';
+import { BoardArticleModule } from '../board-article/board-article.module';
 
-@Module({})
-export class CommentModule {}
+@Module({
+   imports:[
+        MongooseModule.forFeature([
+          {
+            name:"Comment",
+            schema: CommentSchema
+          }
+        ]),
+             AuthModule,
+             ViewModule,
+             MemberModule,
+             PropertyModule,
+             BoardArticleModule
+      ],
+  providers: [CommentResolver, CommentService]
+})
+export class CommentModule {
+  
+}
