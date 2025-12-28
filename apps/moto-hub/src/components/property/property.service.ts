@@ -11,7 +11,7 @@ import { AgentPropertiesInquiry, AllPropertiesInquiry, PropertiesInquiry, Proper
 import { StatisticModifier, T } from '../../libs/types/common';
 import { PropertyUpdate } from '../../libs/dto/property/property.update';
 import * as moment from 'moment';
-import { lookupMember, shapeIntoMongoObjectId } from '../../libs/config';
+import { lookupAuthMemberLiked, lookupMember, shapeIntoMongoObjectId } from '../../libs/config';
 import { LikeInput } from '../../libs/dto/like/like.input';
 import { LikeGroup } from '../../libs/enums/like.enum';
 import { LikeService } from '../like/like.service';
@@ -59,7 +59,7 @@ export class PropertyService {
         await this.propertyStatsEditor({ _id:propertyId, targetKey:"propertyViews", modifier:1 });
         targetProperty.propertyViews ++;
       }
-     			// meliked
+     			/** ME LIKED **/
 			const LikeInput = { memberId: memberId, likeRefId: propertyId, likeGroup: LikeGroup.PROPERTY };
 			targetProperty.meLiked = await this.likeService.checkLikeExistence(LikeInput);
     }
@@ -109,8 +109,8 @@ export class PropertyService {
 						list: [
 							{ $skip: (input.page - 1) * input.limit },
 							{ $limit: input.limit },
-
-							// lookupAuthMemberLiked(memberId),
+                /** LIKED PROPERTIES **/
+							lookupAuthMemberLiked(memberId),
 							lookupMember,
 							{ $unwind: '$memberData' },
 						],
