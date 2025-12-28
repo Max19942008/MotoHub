@@ -106,7 +106,7 @@ public async getBoardArticles(memberId: ObjectId, input: BoardArticlesInquiry): 
                 list: [
                     { $skip: (input.page - 1) * input.limit },
                     { $limit: input.limit },
-                    //meliked
+                    /** ME LIKED **/
                      lookupAuthMemberLiked(memberId),
                     lookupMember,
                     { $unwind: '$memberData' },

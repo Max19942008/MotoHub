@@ -79,9 +79,9 @@ export class FollowService {
           { $skip: (page - 1) * limit },
           { $limit: limit },
           // meLiked
-          // lookupAuthMemberLiked(memberId, '$followingId'),
+          lookupAuthMemberLiked(memberId, '$followingId'),
           //meFollowed
-          // lookupAuthMemberFollowed({followerId: memberId, followingId: '$followingId'}),
+          lookupAuthMemberFollowed({followerId: memberId, followingId: '$followingId'}),
           lookupFollowingData,
           { $unwind: '$followingData' },   
         ],
@@ -113,9 +113,9 @@ export class FollowService {
           { $skip: (page - 1) * limit },
           { $limit: limit },
           // meLiked
-          //  lookupAuthMemberLiked(memberId, '$followerId'),
+           lookupAuthMemberLiked(memberId, '$followerId'),
           //meFollowed
-          //  lookupAuthMemberFollowed({followerId: memberId, followingId:  '$followerId'}),
+           lookupAuthMemberFollowed({followerId: memberId, followingId:  '$followerId'}),
           lookupFollowerData,
           { $unwind: '$followerData' },   
         ],
