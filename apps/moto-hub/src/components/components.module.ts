@@ -6,6 +6,7 @@ import { CommentModule } from './comment/comment.module';
 import { LikeModule } from './like/like.module';
 import { ViewModule } from './view/view.module';
 import { BoardArticleModule } from './board-article/board-article.module';
+import { FollowModule } from './follow/follow.module';
 
 
 @Module({
@@ -16,7 +17,8 @@ import { BoardArticleModule } from './board-article/board-article.module';
     CommentModule, 
     LikeModule, 
     ViewModule, 
-    BoardArticleModule],
+    BoardArticleModule, 
+    FollowModule],
   providers: []
 })
 export class ComponentsModule {}
