@@ -7,7 +7,7 @@ import {  Direction, Message } from '../../libs/enums/common.enum';
 import { MemberService } from '../member/member.service';
 import { PropertyStatus } from '../../libs/enums/property.enum';
 import { ViewGroup } from '../../libs/enums/view.enum';
-import { AgentPropertiesInquiry, AllPropertiesInquiry, PropertiesInquiry, PropertyInput } from '../../libs/dto/property/property.input';
+import { AgentPropertiesInquiry, AllPropertiesInquiry, OrdinaryInquiry, PropertiesInquiry, PropertyInput } from '../../libs/dto/property/property.input';
 import { StatisticModifier, T } from '../../libs/types/common';
 import { PropertyUpdate } from '../../libs/dto/property/property.update';
 import * as moment from 'moment';
@@ -186,17 +186,17 @@ export class PropertyService {
 			.exec();
 		if (!result.length) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
 		return result[0];
-	}
+	};
+	
+
+		public async getFavorites(memberId: ObjectId, input: OrdinaryInquiry): Promise<Properties> {
+		return await this.likeService.getFavoriteProperties(memberId, input);
+	};
 
 
-    public async  propertyStatsEditor(input:StatisticModifier):Promise<Property> {
-    const {_id, targetKey, modifier} = input;
-    return this.propertyModel.findByIdAndUpdate(
-      _id,
-      {$inc: {[targetKey]: modifier } },
-      {new: true}
-    ).exec();
-};
+	// public async getVisited(memberId: ObjectId, input: OrdinaryInquiry): Promise<Properties> {
+	// 	return await this.viewService.getVisitedProperties(memberId, input);
+	// };
 
 
 	public async likeTargetProperty(memberId: ObjectId, likeRefId: ObjectId): Promise<Property> {
@@ -279,6 +279,16 @@ export class PropertyService {
 
 		return result;
 	};
+
+	
+    public async  propertyStatsEditor(input:StatisticModifier):Promise<Property> {
+    const {_id, targetKey, modifier} = input;
+    return this.propertyModel.findByIdAndUpdate(
+      _id,
+      {$inc: {[targetKey]: modifier } },
+      {new: true}
+    ).exec();
+};
   
 
   }

@@ -12,7 +12,7 @@ import { shapeIntoMongoObjectId } from '../../libs/config';
 // import { PropertyUpdate } from '../../libs/dto/property/property.update';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { Properties, Property } from '../../libs/dto/property/property';
-import { AgentPropertiesInquiry, AllPropertiesInquiry, PropertiesInquiry, PropertyInput } from '../../libs/dto/property/property.input';
+import { AgentPropertiesInquiry, AllPropertiesInquiry, OrdinaryInquiry, PropertiesInquiry, PropertyInput } from '../../libs/dto/property/property.input';
 import { PropertyUpdate } from '../../libs/dto/property/property.update';
 
 @Resolver()
@@ -76,18 +76,18 @@ public async getAgentProperties (
 ): Promise<Properties> {
   console.log("Query:getAgentProperties");
   return await this.propertyService.getAgentProperties(memberId, input);
+};
+
+
+ @UseGuards(AuthGuard)
+ @Query(() => Properties)
+ public async getFavorites (
+   @Args("input") input: OrdinaryInquiry ,
+   @AuthMember("_id") memberId: ObjectId,
+ ):Promise<Properties> {
+ console.log("Query: getFavorites");
+ return this.propertyService.getFavorites(memberId, input);
 }
-
-
-//  @UseGuards(AuthGuard)
-//  @Query(() => Properties)
-//  public async getFavorites (
-//    @Args("input") input: OrdinaryInquiry ,
-//    @AuthMember("_id") memberId: ObjectId,
-//  ):Promise<Properties> {
-//  console.log("Query: getFavorites");
-//  return this.propertyService.getFavorites(memberId, input);
-// }
 
 //  @UseGuards(AuthGuard)
 //  @Query(() => Properties)
