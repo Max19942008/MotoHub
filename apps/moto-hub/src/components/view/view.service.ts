@@ -7,6 +7,9 @@ import { T } from '../../libs/types/common';
 // import { Properties } from '../../libs/dto/property/property';
 // import { OrdinaryInquiry } from '../../libs/dto/property/property.input';
 import { ViewGroup } from '../../libs/enums/view.enum';
+import { lookupVisit } from '../../libs/config';
+import { Properties } from '../../libs/dto/property/property';
+import { OrdinaryInquiry } from '../../libs/dto/property/property.input';
 // import { lookupVisit } from '../../libs/config';
 
 @Injectable()
@@ -28,40 +31,40 @@ export class ViewService {
   }
 
 
-  // public async getVisitedProperties (memberId: ObjectId, input: OrdinaryInquiry): Promise<Properties> {
-  //   const {page, limit} = input;
-  //   const match: T = {viewGroup: ViewGroup.PROPERTY, memberId: memberId};
+  public async getVisitedProperties (memberId: ObjectId, input: OrdinaryInquiry): Promise<Properties> {
+    const {page, limit} = input;
+    const match: T = {viewGroup: ViewGroup.PROPERTY, memberId: memberId};
   
-  //   const data: T = await this.viewModel.aggregate([
-  //     {$match: match},
-  //     {$sort: {updatedAt: -1} },
-  //     {
-  //       $lookup: {
-  //         from: 'properties',
-  //         localField: 'viewRefId',
-  //         foreignField: '_id',
-  //         as: "visitedProperty",
-  //       },
-  //     },
-  //     {$unwind: '$visitedProperty'},
-  //     {
-  //       $facet: {
-  //         list: [
-  //           {$skip: (page - 1) * limit},
-  //           {$limit: input.limit},
-  //           lookupVisit,
-  //            {$unwind: '$visitedProperty.memberData'},
-  //         ],
-  //         metaCounter: [{ $count: 'total'}],
-  //       },
-  //     },
-  //   ]).exec();
+    const data: T = await this.viewModel.aggregate([
+      {$match: match},
+      {$sort: {updatedAt: -1} },
+      {
+        $lookup: {
+          from: 'properties',
+          localField: 'viewRefId',
+          foreignField: '_id',
+          as: "visitedProperty",
+        },
+      },
+      {$unwind: '$visitedProperty'},
+      {
+        $facet: {
+          list: [
+            {$skip: (page - 1) * limit},
+            {$limit: input.limit},
+            lookupVisit,
+             {$unwind: '$visitedProperty.memberData'},
+          ],
+          metaCounter: [{ $count: 'total'}],
+        },
+      },
+    ]).exec();
      
-  //   const result: Properties = { list:[], metaCounter: data[0].metaCounter };
-  //   result.list = data[0].list.map((ele) => ele.visitedProperty);
+    const result: Properties = { list:[], metaCounter: data[0].metaCounter };
+    result.list = data[0].list.map((ele) => ele.visitedProperty);
   
-  //  console.log('result:', result); 
-  //   return result;
-  // }
+   console.log('result:', result); 
+    return result;
+  }
 
 }

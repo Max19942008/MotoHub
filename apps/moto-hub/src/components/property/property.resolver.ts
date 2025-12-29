@@ -87,17 +87,18 @@ public async getAgentProperties (
  ):Promise<Properties> {
  console.log("Query: getFavorites");
  return this.propertyService.getFavorites(memberId, input);
-}
+};
 
-//  @UseGuards(AuthGuard)
-//  @Query(() => Properties)
-//  public async getVisited (
-//    @Args("input") input: OrdinaryInquiry ,
-//    @AuthMember("_id") memberId: ObjectId,
-//  ):Promise<Properties> {
-//  console.log("Query: getVisited");
-//  return this.propertyService.getVisited(memberId, input);
-// }
+
+ @UseGuards(AuthGuard)
+ @Query(() => Properties)
+ public async getVisited (
+   @Args("input") input: OrdinaryInquiry ,
+   @AuthMember("_id") memberId: ObjectId,
+ ):Promise<Properties> {
+ console.log("Query: getVisited");
+ return this.propertyService.getVisited(memberId, input);
+}
 
 
 

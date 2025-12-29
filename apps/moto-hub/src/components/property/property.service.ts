@@ -194,9 +194,9 @@ export class PropertyService {
 	};
 
 
-	// public async getVisited(memberId: ObjectId, input: OrdinaryInquiry): Promise<Properties> {
-	// 	return await this.viewService.getVisitedProperties(memberId, input);
-	// };
+	public async getVisited(memberId: ObjectId, input: OrdinaryInquiry): Promise<Properties> {
+		return await this.viewService.getVisitedProperties(memberId, input);
+	};
 
 
 	public async likeTargetProperty(memberId: ObjectId, likeRefId: ObjectId): Promise<Property> {
