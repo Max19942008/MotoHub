@@ -1,8 +1,8 @@
 import { Controller, Get } from '@nestjs/common';
-import { MotohubBatchService } from './motohub-batch.service';
+import { MotohubBatchService } from './batch.service';
 
 @Controller()
-export class MotohubBatchController {
+export class BatchController {
   constructor(private readonly motohubBatchService: MotohubBatchService) {}
 
   @Get()

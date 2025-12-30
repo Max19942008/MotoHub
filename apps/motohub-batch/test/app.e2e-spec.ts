@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
-import { MotohubBatchModule } from './../src/motohub-batch.module';
+import { MotohubBatchModule } from '../src/batch.module';
 
 describe('MotohubBatchController (e2e)', () => {
   let app: INestApplication;
