@@ -4,7 +4,7 @@ import { PropertyBrand, PropertyCondition, PropertyLocation, PropertyStatus, Pro
 import { ObjectId } from "mongoose";
 // import { availableOptions, availablePropertySorts } from "../../config";
 import { Direction } from "../../enums/common.enum";
-import { availableOptions } from "../../config";
+import { availableOptions, availablePropertySorts } from "../../config";
 
 
 
@@ -109,10 +109,10 @@ export class MileAgeRange{
 
 @InputType()
 export class PeriodsRange{
-  @Field(() => Int)
+  @Field(() => Date)
   start: Date;
 
-  @Field(() => Int)
+  @Field(() => Date)
   end: Date;
 };
 
@@ -126,6 +126,14 @@ class PISearch {
   @IsOptional()
   @Field(() => [PropertyLocation], { nullable: true })
   locationList?: PropertyLocation[];
+
+   @IsOptional()
+  @Field(() => [PropertyBrand], { nullable: true })
+  brandList?: PropertyBrand[];
+
+  @IsOptional()
+  @Field(() => [PropertyCondition], { nullable: true })
+  conditionList?: PropertyCondition[];
 
   @IsOptional()
   @Field(() => [PropertyType], { nullable: true })
@@ -159,6 +167,8 @@ class PISearch {
   @IsOptional()
   @Field(() => String, { nullable: true })
   text?: string;
+
+
 }
 
 @InputType()
@@ -174,7 +184,7 @@ export class PropertiesInquiry {
   limit: number;
 
   @IsOptional()
-  // @IsIn(availablePropertySorts)
+  @IsIn(availablePropertySorts)
   @Field(() => String, { nullable: true })
   sort?: string;
 
