@@ -14,6 +14,8 @@ import { lookupAuthMemberLiked, lookupMember, shapeIntoMongoObjectId } from '../
 import { LikeService } from '../like/like.service';
 import { LikeInput } from '../../libs/dto/like/like.input';
 import { LikeGroup } from '../../libs/enums/like.enum';
+import { NotificationService } from '../notification/notification.service';
+import { NotificationGroup, NotificationStatus, NotificationType } from '../../libs/enums/notification.enum';
 
 
 
@@ -22,7 +24,8 @@ export class BoardArticleService {
    constructor(@InjectModel('BoardArticle') private readonly boardArticleModel:Model<BoardArticle>,
    private readonly memberService: MemberService,
     private readonly viewService: ViewService,
-    private likeService: LikeService
+    private likeService: LikeService,
+    private readonly notificationService: NotificationService,
   ){}
 
    public async createBoardArticle(input: BoardArticleInput, memberId: ObjectId): Promise<BoardArticle> {
@@ -134,7 +137,27 @@ public async likeTargetArticle( memberId: ObjectId, likeRefId: ObjectId):Promise
   
   const modifier: number = await this.likeService.toggleLike(input);
   const result = await this.boardArticleStatsEditor({_id: likeRefId, targetKey: 'articleLikes', modifier: modifier});
+
+  if (modifier > 0 && memberId.toString() !== target.memberId.toString()) {
+    const liker = await this.memberService.getMember(null, memberId);
+    await this.notificationService.createNotification({
+      notificationType: NotificationType.LIKE,
+      notificationGroup: NotificationGroup.ARTICLE,
+      notificationStatus: NotificationStatus.WAIT,
+      notificationTitle: `${liker?.memberNick ?? 'SomeOne'} "${target.articleTitle}" article liked!`,
+      notificationDesc: target.articleTitle,
+      authorId: memberId,
+      receiverId: target.memberId,
+      articleId: likeRefId,
+    });
+    await this.memberService.memberStatsEditer({
+      _id: target.memberId,
+      targetKey: 'memberNotifications',
+      modifier: 1,
+    });
+  }
   return result;
+  
    };
 
 

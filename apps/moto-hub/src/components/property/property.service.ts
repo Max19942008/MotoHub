@@ -15,6 +15,8 @@ import { lookupAuthMemberLiked, lookupMember, shapeIntoMongoObjectId } from '../
 import { LikeInput } from '../../libs/dto/like/like.input';
 import { LikeGroup } from '../../libs/enums/like.enum';
 import { LikeService } from '../like/like.service';
+import { NotificationService } from '../notification/notification.service';
+import { NotificationGroup, NotificationStatus, NotificationType } from '../../libs/enums/notification.enum';
 
 
 
@@ -24,6 +26,7 @@ export class PropertyService {
   private memberService: MemberService,  
   private viewService: ViewService,
 	private likeService: LikeService,
+	private notificationService: NotificationService
 ) {}
 
   public async createProperty(input: PropertyInput): Promise<Property> {
@@ -219,6 +222,26 @@ export class PropertyService {
 
 		const modifier: number = await this.likeService.toggleLike(input);
 		const result = await this.propertyStatsEditor({ _id: likeRefId, targetKey: 'propertyLikes', modifier: modifier });
+
+		if (modifier > 0 && memberId.toString() !== target.memberId.toString()) {
+			const liker = await this.memberService.getMember(null, memberId);
+			await this.notificationService.createNotification({
+				notificationType: NotificationType.LIKE,
+				notificationGroup: NotificationGroup.PROPERTY,
+				notificationStatus: NotificationStatus.WAIT,
+				notificationTitle: `${liker?.memberNick ?? 'SomeOne'} "${target.propertyTitle}" liked your property!`,
+				notificationDesc: target.propertyTitle,
+				authorId: memberId,
+				receiverId: target.memberId,
+				propertyId: likeRefId,
+			});
+
+			await this.memberService.memberStatsEditer({
+				_id: target.memberId,
+				targetKey: 'memberNotifications',
+				modifier: 1,
+			});
+		}
 		return result;
 	};
 

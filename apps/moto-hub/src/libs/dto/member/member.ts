@@ -63,6 +63,9 @@ export class Member {
   @Field(() => Int)
   memberViews: number;
 
+    @Field(() => Int)
+  memberNotifications: number;
+
   @Field(() => Int)
   memberComments: number;
 

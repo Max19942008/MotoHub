@@ -20,6 +20,8 @@ import { LikeGroup } from "../../libs/enums/like.enum";
 import { LikeService } from "../like/like.service";
 import { Follower, Following, MeFollowed } from "../../libs/dto/follow/follow";
 import { lookupAuthMemberLiked } from "../../libs/config";
+import { NotificationService } from "../notification/notification.service";
+import { NotificationGroup, NotificationStatus, NotificationType } from "../../libs/enums/notification.enum";
 
 
 @Injectable()
@@ -27,9 +29,11 @@ export class MemberService {
   constructor(
     @InjectModel("Member") private readonly memberModel: Model<Member>,
 		@InjectModel('Follow') private readonly followModel: Model<Follower | Following>,
+		@InjectModel('Notification') private readonly notificationModel: Model<Notification>,
     private authService:AuthService,
     private viewService: ViewService,
 	  private likeService: LikeService,
+
   ) {}
 
   public async signup(input: MemberInput): Promise<Member> {
@@ -150,6 +154,23 @@ export class MemberService {
 		//LIKE TOGGLE
 		const modifier: number = await this.likeService.toggleLike(input);
 		const result = await this.memberStatsEditer({ _id: likeRefId, targetKey: 'memberLikes', modifier: modifier });
+
+		if (modifier > 0 && memberId.toString() !== likeRefId.toString()) {
+			const liker = await this.memberModel.findById(memberId).select('memberNick').lean();
+			await this.notificationModel.create({
+				notificationType: NotificationType.LIKE,
+				notificationGroup: NotificationGroup.MEMBER,
+				notificationStatus: NotificationStatus.WAIT,
+				notificationTitle: `${liker?.memberNick ?? 'Someone'} liked you!`,
+				authorId: memberId,
+				receiverId: likeRefId,
+			});
+			await this.memberStatsEditer({
+				_id: likeRefId,
+				targetKey: 'memberNotifications',
+				modifier: 1,
+			});
+		}
 		return result;
 	};
 

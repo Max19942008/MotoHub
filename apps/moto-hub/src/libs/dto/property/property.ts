@@ -11,6 +11,7 @@ import { MeLiked } from "../like/like";
 @ObjectType()
 export class Property {
   @Field(() => String)
+  
   _id: ObjectId;
 
    @Field(() => PropertyType)

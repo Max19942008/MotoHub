@@ -111,6 +111,11 @@ memberBlocks:{
   default: 0,
 },
 
+memberNotifications:{
+  type:Number,
+  default: 0,
+},
+
 deletedAt:{
   type: Date
 }

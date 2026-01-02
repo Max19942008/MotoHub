@@ -6,6 +6,7 @@ import { FollowResolver } from './follow.resolver';
 import { FollowService } from './follow.service';
 import FollowSchema from '../../schemas/Follow.model';
 import { MemberModule } from '../member/member.module';
+import { NotificationModule } from '../notification/notification.module';
 
 @Module({
   imports:[
@@ -16,7 +17,8 @@ import { MemberModule } from '../member/member.module';
       ]),
         AuthModule,
         MemberModule,
-        LikeModule
+        LikeModule,
+        NotificationModule
     ],
     providers: [FollowResolver, FollowService],
     exports: [FollowService]

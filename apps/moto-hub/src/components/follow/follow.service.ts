@@ -8,6 +8,8 @@ import { Direction, Message } from '../../libs/enums/common.enum';
 import { T } from '../../libs/types/common';
 import { lookupAuthMemberFollowed, lookupAuthMemberLiked, lookupFollowerData, lookupFollowingData } from '../../libs/config';
 import { FollowInquiry } from '../../libs/dto/follow/follow.input';
+import { NotificationService } from '../notification/notification.service';
+import { NotificationGroup, NotificationStatus, NotificationType } from '../../libs/enums/notification.enum';
 
 
 
@@ -15,7 +17,9 @@ import { FollowInquiry } from '../../libs/dto/follow/follow.input';
 export class FollowService {
   constructor(@InjectModel('Follow') private readonly followModel:Model<Follower | Following>,
  private authService: AuthService, 
- private memberService: MemberService,){}
+ private memberService: MemberService,
+ private notificationService: NotificationService
+){}
   
 
 
@@ -31,6 +35,22 @@ export class FollowService {
 
     await this.memberService.memberStatsEditer({_id: followerId, targetKey: 'memberFollowings', modifier: 1});
     await this.memberService.memberStatsEditer({_id: followingId, targetKey: 'memberFollowers', modifier: 1});
+    // notify the followed member
+    const follower = await this.memberService.getMember(null, followerId);
+    
+    await this.notificationService.createNotification({
+      notificationType: NotificationType.FOLLOW,
+      notificationGroup: NotificationGroup.MEMBER,
+      notificationStatus: NotificationStatus.WAIT,
+      notificationTitle: `${follower?.memberNick ?? 'SomeOne'} followed you!`,
+      authorId: followerId,
+      receiverId: followingId,
+    });
+    await this.memberService.memberStatsEditer({
+      _id: followingId,
+      targetKey: 'memberNotifications',
+      modifier: 1,
+    });
     return result;
   };
 
@@ -59,6 +79,21 @@ export class FollowService {
 
     await this.memberService.memberStatsEditer({_id: followerId, targetKey: 'memberFollowings', modifier: -1});
     await this.memberService.memberStatsEditer({_id: followingId, targetKey: 'memberFollowers', modifier: -1});
+    // notify about unfollow
+    const follower = await this.memberService.getMember(null, followerId);
+    await this.notificationService.createNotification({
+      notificationType: NotificationType.UNFOLLOW,
+      notificationGroup: NotificationGroup.MEMBER,
+      notificationStatus: NotificationStatus.WAIT,
+      notificationTitle: `${follower?.memberNick ?? 'SomeOne'} unfollowed you`,
+      authorId: followerId,
+      receiverId: followingId,
+    });
+    await this.memberService.memberStatsEditer({
+      _id: followingId,
+      targetKey: 'memberNotifications',
+      modifier: 1,
+    });
     return result;
   };
 

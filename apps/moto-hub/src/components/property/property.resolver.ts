@@ -98,9 +98,7 @@ public async getAgentProperties (
  ):Promise<Properties> {
  console.log("Query: getVisited");
  return this.propertyService.getVisited(memberId, input);
-}
-
-
+};
 
 
  @UseGuards(AuthGuard)
@@ -111,7 +109,7 @@ public async getAgentProperties (
      console.log("Mutation: likeTargetMember");
      const likeRefId = shapeIntoMongoObjectId(input);
      return await this.propertyService.likeTargetProperty(memberId, likeRefId);
-  }
+  };
 
 /** ADMIN **/
 
