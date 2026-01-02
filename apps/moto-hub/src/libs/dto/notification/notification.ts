@@ -41,6 +41,9 @@ export class Notification {
 	@Field(() => Date)
 	updatedAt: Date;
 
+	@Field(() => Date, { nullable: true })
+	readAt?: Date;
+
 	/** aggregation helpers */
 	@Field(() => Member, { nullable: true })
 	authorData?: Member;

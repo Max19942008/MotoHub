@@ -88,5 +88,12 @@ export class NotificationInquiry {
 export class NotificationReadInput {
 	@IsOptional()
 	@Field(() => [String], { nullable: true })
-	ids?: ObjectId[];
+	_id?: ObjectId[];
+}
+
+@InputType()
+export class NotificationDeleteInput {
+	@IsOptional()
+	@Field(() => [String], { nullable: true })
+	_id?: ObjectId;
 }

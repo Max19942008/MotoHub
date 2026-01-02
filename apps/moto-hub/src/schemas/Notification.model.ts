@@ -47,9 +47,13 @@ const NotificationSchema = new Schema(
 			ref: 'Property',
 		},
 
-		articleId: {
+	articleId: {
 			type: Schema.Types.ObjectId,
 			ref: 'BoardArticle',
+		},
+
+		readAt: {
+			type: Date,
 		},
 	},
 	{ timestamps: true, collection: 'notifications' },

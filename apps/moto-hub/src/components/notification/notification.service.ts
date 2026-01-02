@@ -1,9 +1,9 @@
 import { BadRequestException, Injectable, InternalServerErrorException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
-import { NotificationInput, NotificationInquiry, NotificationReadInput } from "../../libs/dto/notification/notification.input";
+import { NotificationDeleteInput, NotificationInput, NotificationInquiry, NotificationReadInput } from "../../libs/dto/notification/notification.input";
 import { Model, ObjectId } from "mongoose";
 import { Direction, Message } from "../../libs/enums/common.enum";
-import { Notifications } from "../../libs/dto/notification/notification";
+import { Notification, Notifications } from "../../libs/dto/notification/notification";
 import { T } from "../../libs/types/common";
 import { NotificationStatus } from "../../libs/enums/notification.enum";
 
@@ -49,6 +49,24 @@ export class NotificationService  {
 								},
 							},
 							{ $unwind: { path: '$authorData', preserveNullAndEmptyArrays: true } },
+							// include title/desc directly
+							{
+								$project: {
+									notificationType: 1,
+									notificationStatus: 1,
+									notificationGroup: 1,
+									notificationTitle: 1,
+									notificationDesc: 1,
+									authorId: 1,
+									receiverId: 1,
+									propertyId: 1,
+									articleId: 1,
+									createdAt: 1,
+									updatedAt: 1,
+									readAt: 1,
+									authorData: 1,
+								},
+							},
 						],
 						metaCounter: [{ $count: 'total' }],
 						unreadCounter: [
@@ -66,9 +84,19 @@ export class NotificationService  {
 
 	public async markNotificationsRead(receiverId: ObjectId, input?: NotificationReadInput): Promise<boolean> {
 		const match: T = { receiverId, notificationStatus: NotificationStatus.WAIT };
-		if (input?.ids?.length) match._id = { $in: input.ids };
+		if (input?._id?.length) match._id = { $in: input._id };
 
-		await this.notificationModel.updateMany(match, { notificationStatus: NotificationStatus.READ }).exec();
+		await this.notificationModel
+			.updateMany(match, { notificationStatus: NotificationStatus.READ, readAt: new Date() })
+			.exec();
 		return true;
-	}
+	};
+
+	public async deleteNotification(receiverId: ObjectId, input?: NotificationDeleteInput): Promise<boolean> {
+		const match: T = { receiverId, _id: input?._id };
+		await this.notificationModel.findByIdAndDelete(match).exec();
+		return true;
+	};
+
+
 }

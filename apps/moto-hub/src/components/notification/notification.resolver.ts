@@ -7,6 +7,7 @@ import { NotificationService } from './notification.service';
 import { Notifications } from '../../libs/dto/notification/notification';
 import {
   NotificationInquiry,
+  NotificationDeleteInput,
   NotificationReadInput,
 } from '../../libs/dto/notification/notification.input';
 
@@ -31,5 +32,15 @@ export class NotificationResolver {
   ): Promise<boolean> {
     return this.notificationService.markNotificationsRead(memberId, input);
   }
+
+  @UseGuards(AuthGuard)
+  @Mutation(() => Boolean)
+  async deleteNotification(
+    @Args('input', { nullable: true }) input: NotificationDeleteInput,
+    @AuthMember('_id') memberId: ObjectId,
+  ): Promise<boolean> {
+    return this.notificationService.deleteNotification(memberId, input);
+  };
+
 }
 
