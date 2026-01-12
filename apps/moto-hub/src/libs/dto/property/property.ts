@@ -89,7 +89,6 @@ export class Property {
    @Field(() => Date)
    createdAt: Date;
 
-  
    @Field(() => Date)
    updatedAt: Date;
 

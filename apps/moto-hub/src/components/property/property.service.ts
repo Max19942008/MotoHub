@@ -135,6 +135,7 @@ export class PropertyService {
 			brandList,
 			conditionList,
 			yearList,
+			yearRange,
 			engineCcList,
 			typeList,
 			periodsRange,
@@ -148,7 +149,15 @@ export class PropertyService {
 		if (locationList && locationList.length) match.propertyLocation = { $in: locationList };
 		if (brandList && brandList.length) match.propertyBrand = { $in: brandList };
 		if (conditionList && conditionList.length) match.propertyCondition = { $in: conditionList };
-		if (yearList && yearList.length) match.propertyYear = { $in: yearList };
+
+		if ((yearList && yearList.length) || yearRange) {
+			match.propertyYear = {};
+			if (yearList && yearList.length) match.propertyYear.$in = yearList;
+			if (yearRange) {
+				match.propertyYear.$gte = yearRange.start;
+				match.propertyYear.$lte = yearRange.end;
+			}
+		}
 		if (engineCcList && engineCcList.length) match.propertyEngineCc = { $in: engineCcList };
 		if (typeList && typeList.length) match.propertyType = { $in: typeList };
 

@@ -37,11 +37,11 @@ export class PropertyInput {
  propertyTitle: string;
 
 @IsNotEmpty()
- @Field(() => Number)
+ @Field(() => Int)
  propertyPrice: number;
 
  @IsNotEmpty()
- @Field(() => Number)
+ @Field(() => Int)
  propertyYear: number;
 
   @IsNotEmpty()
@@ -116,6 +116,15 @@ export class PeriodsRange{
   end: Date;
 };
 
+@InputType()
+export class YearRange {
+  @Field(() => Int)
+  start: number;
+
+  @Field(() => Int)
+  end: number;
+};
+
 
 @InputType()
 class PISearch {
@@ -142,6 +151,10 @@ class PISearch {
   @IsOptional()
   @Field(() => [Int], { nullable: true })
   yearList?: number[];
+
+  @IsOptional()
+  @Field(() => YearRange, { nullable: true })
+  yearRange?: YearRange;
 
   @IsOptional()
   @Field(() => [Int], { nullable: true })
