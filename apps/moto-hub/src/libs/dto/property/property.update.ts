@@ -1,7 +1,7 @@
 import { InputType, Field, Int } from '@nestjs/graphql';
 import { IsInt, IsNotEmpty, IsOptional, Length, Min } from 'class-validator';
 import { ObjectId } from 'mongoose';
-import { PropertyCondition, PropertyLocation, PropertyStatus, PropertyType } from '../../enums/property.enum';
+import { PropertyBrand, PropertyCondition, PropertyLocation, PropertyStatus, PropertyType } from '../../enums/property.enum';
 
 
 @InputType()
@@ -21,6 +21,10 @@ import { PropertyCondition, PropertyLocation, PropertyStatus, PropertyType } fro
   @IsOptional()
   @Field(() => PropertyLocation, { nullable: true })
   propertyLocation?: PropertyLocation;
+
+  @IsNotEmpty()
+   @Field(() => PropertyBrand)
+  propertyBrand: PropertyBrand;
 
    @IsOptional()
   @Field(() => PropertyCondition, { nullable: true })
