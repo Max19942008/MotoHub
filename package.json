@@ -12,7 +12,7 @@
     "start:dev:batch": "nest start motohub-batch --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "NODE_ENV=production node dist/apps/moto-hub/main.js",
-    "start:prod:batch": "node dist/apps/motohub-batch/main.js",
+    "start:prod:batch": "NODE_ENV=production node dist/apps/motohub-batch/main.js",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",
