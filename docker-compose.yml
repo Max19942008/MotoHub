@@ -11,8 +11,7 @@ services:
       - ./:/usr/src/moto-hub
     working_dir: /usr/src/moto-hub
 
-    env_file:
-      - .env  
+ 
 
     command: sh -c "rm -rf dist && npm install && npm run build && npm run start:prod"
 
@@ -27,8 +26,7 @@ services:
     working_dir: /usr/src/moto-hub
     networks:
       - monorepo-network
-    env_file:
-      - .env
+    
     # FOR PRODUCTION
     command: sh -c "npm install && npm run build && npm run start:prod:batch"
 
