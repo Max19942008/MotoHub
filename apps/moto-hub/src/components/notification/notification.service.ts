@@ -150,7 +150,7 @@ export class NotificationService  {
 
 	public async deleteNotification(receiverId: ObjectId, input?: NotificationDeleteInput): Promise<boolean> {
 		const match: T = { receiverId, _id: input?._id };
-		await this.notificationModel.findByIdAndDelete(match).exec();
+		await this.notificationModel.findOneAndDelete(match).exec();
 		return true;
 	};
 
