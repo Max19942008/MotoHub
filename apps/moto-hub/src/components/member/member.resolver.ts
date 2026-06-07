@@ -52,7 +52,7 @@ export class MemberResolver {
    @UseGuards(AuthGuard)
     @Query(
       () => String)
-  public async checkAuth(@AuthMember("memberNick") memberNick: string):Promise<String> {
+  public async checkAuth(@AuthMember("memberNick") memberNick: string):Promise<string> {
     console.log("Query:checkAuth");
     console.log("memberNick:",memberNick);
      return `Hi ${memberNick}`;
@@ -62,7 +62,7 @@ export class MemberResolver {
     @Roles(MemberType.USER,MemberType.AGENT)
    @UseGuards(RolesGuard )
     @Query(() => String)
-  public async checkAuthRoles(@AuthMember() authMember: Member):Promise<String> {
+  public async checkAuthRoles(@AuthMember() authMember: Member):Promise<string> {
     console.log("Query:checkAuthRoles");
      return `Hi ${authMember.memberNick} you are ${authMember.memberType} memberId ${authMember._id}`
   };
@@ -135,7 +135,7 @@ export class MemberResolver {
 	public async imageUploader(
 		@Args({ name: 'file', type: () => GraphQLUpload })
 		{ createReadStream, filename, mimetype }: FileUpload,
-		@Args('target') target: String,
+		@Args('target') target: string,
 	): Promise<string> {
 		console.log('Mutation: imageUploader');
 
@@ -186,7 +186,7 @@ export class MemberResolver {
 				});
 
 				uploadedImages[index] = url;
-			} catch (err) {
+			} catch (err: any) {
 				console.error('Upload failed:', err.message);
 			}
 		});

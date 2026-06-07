@@ -15,7 +15,7 @@ export class NotificationService  {
 	public async createNotification(input: NotificationInput): Promise<Notification> {
 		try {
 			return await this.notificationModel.create(input);
-		} catch (err) {
+		} catch (err: any) {
 			console.log('Error: NotificationService.createNotification', err.message);
 			throw new BadRequestException(Message.CREATE_FAILED);
 		}

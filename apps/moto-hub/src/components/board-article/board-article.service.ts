@@ -39,7 +39,7 @@ export class BoardArticleService {
     });
     return result
 
-   } catch(err) {
+   } catch(err: any) {
     console.log('Error, ServiceModel:', err.message);
     throw new BadRequestException(Message.CREATE_FAILED);
    }
