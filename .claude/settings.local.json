@@ -3,7 +3,10 @@
     "allow": [
       "Bash(npx tsc *)",
       "Bash(echo \"EXIT: $?\")",
-      "Bash(echo \"---EXIT: $?---\")"
+      "Bash(echo \"---EXIT: $?---\")",
+      "Bash(powershell -Command \"Remove-Item -Recurse -Force dist -ErrorAction SilentlyContinue; Remove-Item -Recurse -Force apps/moto-hub/tsconfig.app.tsbuildinfo,apps/motohub-batch/tsconfig.app.tsbuildinfo -ErrorAction SilentlyContinue\")",
+      "Bash(npm install *)",
+      "Bash(npm run *)"
     ]
   }
 }

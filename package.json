@@ -6,11 +6,11 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "build": "nest build && nest build motohub-batch",
-    "start": "nest start",
-    "start:dev": "nest start --watch",
-    "start:dev:batch": "nest start motohub-batch --watch",
-    "start:debug": "nest start --debug --watch",
+    "build": "cross-env NODE_OPTIONS=--max-old-space-size=8192 nest build && cross-env NODE_OPTIONS=--max-old-space-size=8192 nest build motohub-batch",
+    "start": "cross-env NODE_OPTIONS=--max-old-space-size=8192 nest start",
+    "start:dev": "cross-env NODE_OPTIONS=--max-old-space-size=8192 nest start --watch",
+    "start:dev:batch": "cross-env NODE_OPTIONS=--max-old-space-size=8192 nest start motohub-batch --watch",
+    "start:debug": "cross-env NODE_OPTIONS=--max-old-space-size=8192 nest start --debug --watch",
     "start:prod": "NODE_ENV=production node dist/apps/moto-hub/main.js",
     "start:prod:batch": "NODE_ENV=production node dist/apps/motohub-batch/main.js",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
@@ -68,7 +68,7 @@
     "ts-node": "^10.9.1",
     "ts-node-dev": "^2.0.0",
     "tsconfig-paths": "^4.2.0",
-    "typescript": "^6.0.3"
+    "typescript": "5.9.3"
   },
   "jest": {
     "moduleFileExtensions": [
