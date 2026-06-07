@@ -58,7 +58,7 @@ export class MemberService {
       .findOne({ memberNick: memberNick })
       .select("+memberPassword")
       .exec();
-    if (!response || response.memberNick === MemberStatus.DELETE) {
+    if (!response || response.memberStatus === MemberStatus.DELETE) {
       throw new InternalServerErrorException(Message.NO_MEMBER_NICK);
     } else if (response.memberStatus === MemberStatus.BLOCK) {
       throw new InternalServerErrorException(Message.BLOCKED_USER);

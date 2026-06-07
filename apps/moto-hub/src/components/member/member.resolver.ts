@@ -139,6 +139,7 @@ export class MemberResolver {
 	): Promise<string> {
 		console.log('Mutation: imageUploader');
 
+		if (!/^[a-zA-Z0-9_-]+$/.test(target)) throw new Error(Message.UPLOAD_FAILED);
 		if (!filename) throw new Error(Message.UPLOAD_FAILED);
 		const validMime = validMimeTypes.includes(mimetype);
 		if (!validMime) throw new Error(Message.PROVIDE_ALLOWED_FORMAT);
@@ -167,6 +168,8 @@ export class MemberResolver {
 		@Args('target') target: string,
 	): Promise<string[]> {
 		console.log('Mutation: imagesUploader');
+
+		if (!/^[a-zA-Z0-9_-]+$/.test(target)) throw new Error(Message.UPLOAD_FAILED);
 
 		const uploadedImages: string[] = [];
 
