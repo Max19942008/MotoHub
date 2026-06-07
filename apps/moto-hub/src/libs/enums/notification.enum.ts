@@ -5,6 +5,7 @@ export enum NotificationType {
 	COMMENT = 'COMMENT',
 	FOLLOW = 'FOLLOW',
 	UNFOLLOW = 'UNFOLLOW',
+	INTEREST = 'INTEREST',
 }
 registerEnumType(NotificationType, {
 	name: 'NotificationType',

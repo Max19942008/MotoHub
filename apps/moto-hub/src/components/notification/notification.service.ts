@@ -4,13 +4,69 @@ import { NotificationDeleteInput, NotificationInput, NotificationInquiry, Notifi
 import { Model, ObjectId } from "mongoose";
 import { Direction, Message } from "../../libs/enums/common.enum";
 import { Notification, Notifications } from "../../libs/dto/notification/notification";
+import { Member } from "../../libs/dto/member/member";
+import { Property } from "../../libs/dto/property/property";
 import { T } from "../../libs/types/common";
-import { NotificationStatus } from "../../libs/enums/notification.enum";
+import { NotificationGroup, NotificationStatus, NotificationType } from "../../libs/enums/notification.enum";
+import { MemberStatus, MemberType } from "../../libs/enums/member.enum";
+import { MailService } from "./channels/mail.service";
+import { TelegramService } from "./channels/telegram.service";
 
 
 @Injectable()
 export class NotificationService  {
-	constructor(@InjectModel('Notification') private readonly notificationModel: Model<Notification>) {}
+	constructor(
+		@InjectModel('Notification') private readonly notificationModel: Model<Notification>,
+		@InjectModel('Member') private readonly memberModel: Model<Member>,
+		private readonly mailService: MailService,
+		private readonly telegramService: TelegramService,
+	) {}
+
+	/**
+	 * Triggered when a client expresses interest in a motorbike.
+	 * Creates an in-app notification for every ADMIN and pushes the same alert
+	 * to the admin via Gmail and Telegram.
+	 */
+	public async notifyAdminsInterest(client: Member, property: Property): Promise<boolean> {
+		const admins = await this.memberModel
+			.find({ memberType: MemberType.ADMIN, memberStatus: MemberStatus.ACTIVE })
+			.select('_id')
+			.lean()
+			.exec();
+
+		const title = `New interest: ${client?.memberNick ?? 'A client'} is interested in "${property.propertyTitle}"`;
+		const desc = `${client?.memberNick ?? 'A client'} (phone: ${client?.memberPhone ?? '-'}) is interested in "${property.propertyTitle}".`;
+
+		// 1) In-app notification for each admin
+		for (const admin of admins) {
+			await this.createNotification({
+				notificationType: NotificationType.INTEREST,
+				notificationGroup: NotificationGroup.PROPERTY,
+				notificationStatus: NotificationStatus.WAIT,
+				notificationTitle: title,
+				notificationDesc: desc,
+				authorId: client._id,
+				receiverId: admin._id as ObjectId,
+				propertyId: property._id,
+			}).catch((err) => console.log('notifyAdminsInterest in-app err:', err?.message));
+		}
+
+		// 2) External channels (Gmail + Telegram) — best-effort, never block the flow
+		const html = `
+			<h3>🏍️ New motorbike interest on MOTOPRESTO</h3>
+			<p><b>Client:</b> ${client?.memberNick ?? '-'} (${client?.memberPhone ?? '-'})</p>
+			<p><b>Motorbike:</b> ${property.propertyTitle}</p>
+			<p><b>Price:</b> ${property.propertyPrice ?? '-'}</p>
+			<p><b>Property ID:</b> ${property._id}</p>`;
+		const telegramText = `🏍️ <b>New interest on MOTOPRESTO</b>\nClient: ${client?.memberNick ?? '-'} (${client?.memberPhone ?? '-'})\nMotorbike: ${property.propertyTitle}\nPrice: ${property.propertyPrice ?? '-'}`;
+
+		await Promise.all([
+			this.mailService.sendToAdmin('New motorbike interest — MOTOPRESTO', html),
+			this.telegramService.sendToAdmin(telegramText),
+		]);
+
+		return true;
+	}
 
 	public async createNotification(input: NotificationInput): Promise<Notification> {
 		try {

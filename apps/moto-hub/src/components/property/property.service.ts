@@ -255,6 +255,19 @@ export class PropertyService {
 	};
 
 
+	/** Client expresses interest in a motorbike → notify admins (in-app + Gmail + Telegram) */
+	public async notifyInterest(memberId: ObjectId, propertyId: ObjectId): Promise<boolean> {
+		const target: Property = await this.propertyModel.findOne({
+			_id: propertyId,
+			propertyStatus: PropertyStatus.ACTIVE,
+		});
+		if (!target) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
+
+		const client = await this.memberService.getMember(null, memberId);
+		return await this.notificationService.notifyAdminsInterest(client, target);
+	};
+
+
 
 	public async getAllPropertiesByAdmin(input: AllPropertiesInquiry): Promise<Properties> {
 		const { propertyStatus, propertyLocationList } = input.search;

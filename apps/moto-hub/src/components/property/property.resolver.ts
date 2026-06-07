@@ -111,6 +111,17 @@ public async getAgentProperties (
      return await this.propertyService.likeTargetProperty(memberId, likeRefId);
   };
 
+
+ @UseGuards(AuthGuard)
+ @Mutation(() => Boolean)
+   public async notifyInterest (
+  @Args('propertyId') input: string,
+  @AuthMember('_id') memberId: ObjectId ) :Promise<boolean> {
+     console.log("Mutation: notifyInterest");
+     const propertyId = shapeIntoMongoObjectId(input);
+     return await this.propertyService.notifyInterest(memberId, propertyId);
+  };
+
 /** ADMIN **/
 
 @Roles(MemberType.ADMIN)
