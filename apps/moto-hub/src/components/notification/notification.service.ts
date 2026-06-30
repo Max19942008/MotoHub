@@ -117,6 +117,7 @@ export class NotificationService  {
 									receiverId: 1,
 									propertyId: 1,
 									articleId: 1,
+									partId: 1,
 									createdAt: 1,
 									updatedAt: 1,
 									readAt: 1,

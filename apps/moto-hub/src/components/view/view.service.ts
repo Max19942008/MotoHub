@@ -7,8 +7,9 @@ import { T } from '../../libs/types/common';
 // import { Properties } from '../../libs/dto/property/property';
 // import { OrdinaryInquiry } from '../../libs/dto/property/property.input';
 import { ViewGroup } from '../../libs/enums/view.enum';
-import { lookupVisit } from '../../libs/config';
+import { lookupVisit, lookupVisitPart } from '../../libs/config';
 import { Properties } from '../../libs/dto/property/property';
+import { Parts } from '../../libs/dto/part/part';
 import { OrdinaryInquiry } from '../../libs/dto/property/property.input';
 // import { lookupVisit } from '../../libs/config';
 
@@ -62,8 +63,44 @@ export class ViewService {
      
     const result: Properties = { list:[], metaCounter: data[0].metaCounter };
     result.list = data[0].list.map((ele) => ele.visitedProperty);
-  
-   console.log('result:', result); 
+
+   console.log('result:', result);
+    return result;
+  }
+
+
+  public async getVisitedParts (memberId: ObjectId, input: OrdinaryInquiry): Promise<Parts> {
+    const {page, limit} = input;
+    const match: T = {viewGroup: ViewGroup.PART, memberId: memberId};
+
+    const data: T = await this.viewModel.aggregate([
+      {$match: match},
+      {$sort: {updatedAt: -1} },
+      {
+        $lookup: {
+          from: 'parts',
+          localField: 'viewRefId',
+          foreignField: '_id',
+          as: "visitedPart",
+        },
+      },
+      {$unwind: '$visitedPart'},
+      {
+        $facet: {
+          list: [
+            {$skip: (page - 1) * limit},
+            {$limit: input.limit},
+            lookupVisitPart,
+             {$unwind: '$visitedPart.memberData'},
+          ],
+          metaCounter: [{ $count: 'total'}],
+        },
+      },
+    ]).exec();
+
+    const result: Parts = { list:[], metaCounter: data[0].metaCounter };
+    result.list = data[0].list.map((ele) => ele.visitedPart);
+
     return result;
   }
 

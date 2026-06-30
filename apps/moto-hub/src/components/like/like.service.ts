@@ -7,8 +7,9 @@ import { T } from '../../libs/types/common';
 import { Message } from '../../libs/enums/common.enum';
 import { OrdinaryInquiry } from '../../libs/dto/property/property.input';
 import { Properties } from '../../libs/dto/property/property';
+import { Parts } from '../../libs/dto/part/part';
 import { LikeGroup } from '../../libs/enums/like.enum';
-import { lookupFavorite } from '../../libs/config';
+import { lookupFavorite, lookupFavoritePart } from '../../libs/config';
 
 @Injectable()
 export class LikeService {
@@ -74,7 +75,43 @@ public async getFavoriteProperties (memberId: ObjectId, input: OrdinaryInquiry):
   const result: Properties = { list:[], metaCounter: data[0].metaCounter };
   result.list = data[0].list.map((ele) => ele.favorityProperty);
 
- console.log('result:', result); 
+ console.log('result:', result);
+  return result;
+};
+
+
+public async getFavoriteParts (memberId: ObjectId, input: OrdinaryInquiry): Promise<Parts> {
+  const {page, limit} = input;
+  const match: T = {likeGroup: LikeGroup.PART, memberId: memberId};
+
+  const data: T = await this.likeModel.aggregate([
+    {$match: match},
+    {$sort: {updatedAt: -1} },
+    {
+      $lookup: {
+        from: 'parts',
+        localField: 'likeRefId',
+        foreignField: '_id',
+        as: "favoritePart",
+      },
+    },
+    {$unwind: '$favoritePart'},
+    {
+      $facet: {
+        list: [
+          {$skip: (page - 1) * limit},
+          {$limit: input.limit},
+          lookupFavoritePart,
+           {$unwind: '$favoritePart.memberData'},
+        ],
+        metaCounter: [{ $count: 'total'}],
+      },
+    },
+  ]).exec();
+
+  const result: Parts = { list:[], metaCounter: data[0].metaCounter };
+  result.list = data[0].list.map((ele) => ele.favoritePart);
+
   return result;
 };
 

@@ -52,6 +52,11 @@ const NotificationSchema = new Schema(
 			ref: 'BoardArticle',
 		},
 
+		partId: {
+			type: Schema.Types.ObjectId,
+			ref: 'Part',
+		},
+
 		readAt: {
 			type: Date,
 		},

@@ -13,6 +13,15 @@ export const availablePropertySorts = [
 ];
 export const availableBoardArticleSorts = ['createdAt', 'updatedAt', 'articleLikes', 'articleViews'];
 export const availableCommentSorts = ['createdAt', 'updatedAt'];
+export const availablePartOptions = ['partBarter'];
+export const availablePartSorts = [
+	'createdAt',
+	'updatedAt',
+	'partLikes',
+	'partViews',
+	'partRank',
+	'partPrice',
+];
 
 /** IMAGE CONFIGURATION  **/
 import { v4 as uuidv4 } from 'uuid';
@@ -139,5 +148,23 @@ export const lookupVisit = {
 		localField: 'visitedProperty.memberId',
 		foreignField: '_id',
 		as: 'visitedProperty.memberData',
+	},
+};
+
+export const lookupFavoritePart = {
+	$lookup: {
+		from: 'members',
+		localField: 'favoritePart.memberId',
+		foreignField: '_id',
+		as: 'favoritePart.memberData',
+	},
+};
+
+export const lookupVisitPart = {
+	$lookup: {
+		from: 'members',
+		localField: 'visitedPart.memberId',
+		foreignField: '_id',
+		as: 'visitedPart.memberData',
 	},
 };

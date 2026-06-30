@@ -61,6 +61,11 @@ memberProperties:{
   default: 0,
 },
 
+memberParts:{
+  type:Number,
+  default: 0,
+},
+
 memberArticles:{
   type:Number,
   default: 0,

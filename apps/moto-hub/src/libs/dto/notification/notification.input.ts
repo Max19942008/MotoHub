@@ -42,6 +42,10 @@ export class NotificationInput {
 	@IsOptional()
 	@Field(() => String, { nullable: true })
 	articleId?: ObjectId;
+
+	@IsOptional()
+	@Field(() => String, { nullable: true })
+	partId?: ObjectId;
 }
 
 @InputType()

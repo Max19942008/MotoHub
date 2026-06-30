@@ -8,19 +8,21 @@ import { ViewModule } from './view/view.module';
 import { BoardArticleModule } from './board-article/board-article.module';
 import { FollowModule } from './follow/follow.module';
 import { NotificationModule } from './notification/notification.module';
+import { PartModule } from './part/part.module';
 
 
 @Module({
   imports: [
-    MemberModule, 
+    MemberModule,
     PropertyModule,
     AuthModule,
-    CommentModule, 
-    LikeModule, 
-    ViewModule, 
-    BoardArticleModule, 
-    FollowModule, 
-    NotificationModule],
+    CommentModule,
+    LikeModule,
+    ViewModule,
+    BoardArticleModule,
+    FollowModule,
+    NotificationModule,
+    PartModule],
   providers: []
 })
 export class ComponentsModule {}
