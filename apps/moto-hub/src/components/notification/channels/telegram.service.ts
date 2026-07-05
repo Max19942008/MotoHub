@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
+import FormData from 'form-data';
 
 /**
  * Sends messages to a Telegram chat via the Bot API.
@@ -40,8 +41,9 @@ export class TelegramService {
 	}
 
 	/**
-	 * Sends a photo with an HTML caption. Falls back to a plain text message
-	 * if the photo cannot be delivered (e.g. bad URL). Best-effort.
+	 * Downloads the image and uploads it to Telegram as multipart/form-data
+	 * (more reliable than passing a URL, which Telegram often rejects for
+	 * non-standard ports). Falls back to a plain text message on any failure.
 	 */
 	public async sendPhotoToAdmin(photoUrl: string, caption: string): Promise<boolean> {
 		const token = process.env.TELEGRAM_BOT_TOKEN;
@@ -50,17 +52,23 @@ export class TelegramService {
 			this.logger.warn('TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID not set — skipping Telegram.');
 			return false;
 		}
+		const safeCaption = caption.length > 1024 ? caption.slice(0, 1021) + '...' : caption;
 		try {
-			const url = `https://api.telegram.org/bot${token}/sendPhoto`;
-			await firstValueFrom(
-				this.httpService.post(url, {
-					chat_id: chatId,
-					photo: photoUrl,
-					// Telegram caption limit is 1024 chars
-					caption: caption.length > 1024 ? caption.slice(0, 1021) + '...' : caption,
-					parse_mode: 'HTML',
-				}),
+			// 1) download the image bytes
+			const imgResp = await firstValueFrom(
+				this.httpService.get(photoUrl, { responseType: 'arraybuffer', timeout: 15000, maxContentLength: 10 * 1024 * 1024 }),
 			);
+			const buffer = Buffer.from(imgResp.data);
+
+			// 2) upload as multipart
+			const form = new FormData();
+			form.append('chat_id', chatId);
+			form.append('parse_mode', 'HTML');
+			form.append('caption', safeCaption);
+			form.append('photo', buffer, { filename: 'motorbike.jpg', contentType: 'image/jpeg' });
+
+			const url = `https://api.telegram.org/bot${token}/sendPhoto`;
+			await firstValueFrom(this.httpService.post(url, form, { headers: form.getHeaders() }));
 			this.logger.verbose('Admin Telegram photo sent.');
 			return true;
 		} catch (err: any) {
