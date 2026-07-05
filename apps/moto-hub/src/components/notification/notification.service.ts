@@ -52,17 +52,66 @@ export class NotificationService  {
 		}
 
 		// 2) External channels (Gmail + Telegram) — best-effort, never block the flow
+		const apiUrl = (process.env.API_PUBLIC_URL ?? 'http://159.223.61.65:4001').replace(/\/+$/, '');
+		const frontUrl = (process.env.FRONTEND_URL ?? 'http://159.223.61.65:4000').replace(/\/+$/, '');
+		const dash = (v: any) => (v === undefined || v === null || v === '' ? '-' : v);
+		const priceStr = property.propertyPrice != null ? `$${property.propertyPrice.toLocaleString()}` : '-';
+		const options =
+			[property.propertyBarter ? 'Barter' : null, property.propertyRent ? 'Rent' : null]
+				.filter(Boolean)
+				.join(', ') || '-';
+		const detailLink = `${frontUrl}/property/detail?id=${property._id}`;
+		const firstImage = property.propertyImages?.[0];
+		const imageUrl = firstImage ? `${apiUrl}/${String(firstImage).replace(/^\/+/, '')}` : null;
+
+		// --- Full details: e-mail (HTML) ---
 		const html = `
 			<h3>🏍️ New motorbike interest on MOTOPRESTO</h3>
-			<p><b>Client:</b> ${client?.memberNick ?? '-'} (${client?.memberPhone ?? '-'})</p>
-			<p><b>Motorbike:</b> ${property.propertyTitle}</p>
-			<p><b>Price:</b> ${property.propertyPrice ?? '-'}</p>
-			<p><b>Property ID:</b> ${property._id}</p>`;
-		const telegramText = `🏍️ <b>New interest on MOTOPRESTO</b>\nClient: ${client?.memberNick ?? '-'} (${client?.memberPhone ?? '-'})\nMotorbike: ${property.propertyTitle}\nPrice: ${property.propertyPrice ?? '-'}`;
+			<h4>👤 Client</h4>
+			<p><b>Nickname:</b> ${dash(client?.memberNick)}<br/>
+			<b>Phone:</b> ${dash(client?.memberPhone)}</p>
+			<h4>🏍️ Motorbike</h4>
+			<p><b>Title:</b> ${dash(property.propertyTitle)}<br/>
+			<b>Brand:</b> ${dash(property.propertyBrand)}<br/>
+			<b>Type:</b> ${dash(property.propertyType)}<br/>
+			<b>Condition:</b> ${dash(property.propertyCondition)}<br/>
+			<b>Year:</b> ${dash(property.propertyYear)}<br/>
+			<b>Engine:</b> ${dash(property.propertyEngineCc)} cc<br/>
+			<b>Mileage:</b> ${dash(property.propertyMileAge)} km<br/>
+			<b>Price:</b> ${priceStr}<br/>
+			<b>Location:</b> ${dash(property.propertyLocation)}<br/>
+			<b>Address:</b> ${dash(property.propertyAddress)}<br/>
+			<b>Options:</b> ${options}</p>
+			<h4>📝 Description</h4>
+			<p>${dash(property.propertyDesc)}</p>
+			<p><b>Listing:</b> <a href="${detailLink}">${detailLink}</a><br/>
+			<b>Property ID:</b> ${property._id}</p>
+			${imageUrl ? `<p><img src="${imageUrl}" alt="motorbike" style="max-width:480px;border-radius:8px"/></p>` : ''}`;
+
+		// --- Full details: Telegram (HTML) ---
+		const telegramText =
+			`🏍️ <b>New interest on MOTOPRESTO</b>\n\n` +
+			`👤 <b>Client:</b> ${dash(client?.memberNick)}\n` +
+			`📞 <b>Phone:</b> ${dash(client?.memberPhone)}\n\n` +
+			`<b>${dash(property.propertyTitle)}</b>\n` +
+			`🏷️ Brand: ${dash(property.propertyBrand)}\n` +
+			`🛵 Type: ${dash(property.propertyType)}\n` +
+			`🔧 Condition: ${dash(property.propertyCondition)}\n` +
+			`📅 Year: ${dash(property.propertyYear)}\n` +
+			`⚙️ Engine: ${dash(property.propertyEngineCc)} cc\n` +
+			`🛣️ Mileage: ${dash(property.propertyMileAge)} km\n` +
+			`💵 Price: ${priceStr}\n` +
+			`📍 Location: ${dash(property.propertyLocation)}\n` +
+			`🏠 Address: ${dash(property.propertyAddress)}\n` +
+			`🔁 Options: ${options}\n` +
+			`📝 ${dash(property.propertyDesc)}\n\n` +
+			`🔗 <a href="${detailLink}">Open listing</a>`;
 
 		await Promise.all([
 			this.mailService.sendToAdmin('New motorbike interest — MOTOPRESTO', html),
-			this.telegramService.sendToAdmin(telegramText),
+			imageUrl
+				? this.telegramService.sendPhotoToAdmin(imageUrl, telegramText)
+				: this.telegramService.sendToAdmin(telegramText),
 		]);
 
 		return true;
