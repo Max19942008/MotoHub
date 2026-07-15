@@ -7,16 +7,17 @@ import { availableAgentSorts, availableMemberSorts } from "../../config";
 @InputType()
 export class MemberInput {
   @IsNotEmpty()
-  @Length(3, 12)
+  @Length(3, 20)
   @Field(() => String)
   memberNick: string;
 
   @IsNotEmpty()
-  @Length(5, 12)
+  @Length(5, 30)
   @Field(() => String)
   memberPassword: string;
 
   @IsNotEmpty()
+  @Length(7, 20)
   @Field(() => String)
   memberPhone: string;
 
@@ -32,12 +33,12 @@ export class MemberInput {
 @InputType()
 export class LoginInput {
   @IsNotEmpty()
-  @Length(3, 12)
+  @Length(3, 20)
   @Field(() => String)
   memberNick: string;
 
   @IsNotEmpty()
-  @Length(5, 12)
+  @Length(5, 30)
   @Field(() => String)
   memberPassword: string;
 }
