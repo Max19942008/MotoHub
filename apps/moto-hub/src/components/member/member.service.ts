@@ -73,6 +73,7 @@ export class MemberService {
 
 
  	public async updateMember(memberId: ObjectId, input: MemberUpdate): Promise<Member> {
+		await this.releaseUniqueFieldsOnDelete(memberId, input);
 		const result: Member = await this.memberModel
 			.findOneAndUpdate({ _id: memberId, memberStatus: MemberStatus.ACTIVE }, input, { new: true })
 			.exec();
@@ -80,6 +81,26 @@ export class MemberService {
 
 		result.accessToken = await this.authService.createToken(result);
 		return result;
+	};
+
+	/**
+	 * When a member is soft-deleted (memberStatus = DELETE) we "release" the
+	 * unique fields (phone & nick) by appending a per-member tag so the original
+	 * phone/nick become free for a brand-new signup. The record is preserved for
+	 * audit — only its unique keys are freed. Idempotent (won't double-tag).
+	 */
+	private async releaseUniqueFieldsOnDelete(memberId: ObjectId, input: MemberUpdate): Promise<void> {
+		if (input.memberStatus !== MemberStatus.DELETE) return;
+		const current = await this.memberModel
+			.findById(memberId)
+			.select('memberPhone memberNick memberStatus')
+			.lean()
+			.exec();
+		if (!current || current.memberStatus === MemberStatus.DELETE) return; // already released
+		const tag = `#del#${memberId}`;
+		if (current.memberPhone && !current.memberPhone.includes('#del#')) input.memberPhone = `${current.memberPhone}${tag}`;
+		if (current.memberNick && !current.memberNick.includes('#del#')) input.memberNick = `${current.memberNick}${tag}`;
+		input.deletedAt = new Date();
 	};
 
 
@@ -205,6 +226,7 @@ export class MemberService {
 	};
 
   	public async updateMemberByAdmin(input: MemberUpdate): Promise<Member> {
+		await this.releaseUniqueFieldsOnDelete(input._id, input);
 		const result: Member = await this.memberModel.findByIdAndUpdate({ _id: input._id }, input, { new: true }).exec();
 		if (!result) throw new InternalServerErrorException(Message.UPDATE_FAILED);
 		return result;
