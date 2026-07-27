@@ -37,6 +37,9 @@ export class MemberService {
   ) {}
 
   public async signup(input: MemberInput): Promise<Member> {
+    /** ADMIN is never self-assignable — the single admin is provisioned manually **/
+    if (input.memberType === MemberType.ADMIN) throw new BadRequestException(Message.NOT_ALLOWED_REQUEST);
+
     //TODO: hashing passwords
     input.memberPassword = await this.authService.hasPassword(input.memberPassword);
     try {
@@ -73,6 +76,14 @@ export class MemberService {
 
 
  	public async updateMember(memberId: ObjectId, input: MemberUpdate): Promise<Member> {
+		/**
+		 * A member may never change their own role, and of the statuses only
+		 * DELETE (self-deletion) is theirs to set — everything else is moderation
+		 * and belongs to updateMemberByAdmin.
+		 */
+		delete input.memberType;
+		if (input.memberStatus && input.memberStatus !== MemberStatus.DELETE) delete input.memberStatus;
+
 		await this.releaseUniqueFieldsOnDelete(memberId, input);
 		const result: Member = await this.memberModel
 			.findOneAndUpdate({ _id: memberId, memberStatus: MemberStatus.ACTIVE }, input, { new: true })
@@ -226,6 +237,11 @@ export class MemberService {
 	};
 
   	public async updateMemberByAdmin(input: MemberUpdate): Promise<Member> {
+		/** The project runs on a single admin — promoting anyone else is rejected here
+		 *  so the caller gets a clear message instead of a raw duplicate-key error
+		 *  from the unique partial index on memberType. **/
+		if (input.memberType === MemberType.ADMIN) throw new BadRequestException(Message.NOT_ALLOWED_REQUEST);
+
 		await this.releaseUniqueFieldsOnDelete(input._id, input);
 		const result: Member = await this.memberModel.findByIdAndUpdate({ _id: input._id }, input, { new: true }).exec();
 		if (!result) throw new InternalServerErrorException(Message.UPDATE_FAILED);

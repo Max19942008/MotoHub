@@ -130,4 +130,14 @@ deletedAt:{
 {timestamps: true, collection:"members"},
 );
 
+/**
+ * The platform runs on exactly ONE admin. This partial unique index makes a
+ * second ADMIN document impossible at the database level, whatever the code
+ * path. To hand over: demote the current admin first, then promote the new one.
+ */
+MemberSchema.index(
+  { memberType: 1 },
+  { unique: true, partialFilterExpression: { memberType: MemberType.ADMIN } },
+);
+
 export default MemberSchema;
