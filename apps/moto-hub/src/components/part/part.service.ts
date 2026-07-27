@@ -64,7 +64,7 @@ export class PartService {
 			targetPart.meLiked = await this.likeService.checkLikeExistence(likeInput);
 		}
 
-		targetPart.memberData = await this.memberService.getMember(null, targetPart.memberId);
+		targetPart.memberData = await this.memberService.getMemberForDisplay(targetPart.memberId);
 		return targetPart;
 	}
 

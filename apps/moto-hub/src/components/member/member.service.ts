@@ -160,6 +160,22 @@ export class MemberService {
        	return targetMember;
     };
 
+	/**
+	 * Owner data to hang off a listing, article or comment.
+	 *
+	 * Unlike getMember this never throws: a listing whose author has since
+	 * soft-deleted their account is still a valid listing, and failing the whole
+	 * query over a missing author took every such listing offline.
+	 */
+	public async getMemberForDisplay(targetId: ObjectId): Promise<Member | null> {
+		if (!targetId) return null;
+		return await this.memberModel
+			.findOne({ _id: targetId, memberStatus: { $in: [MemberStatus.ACTIVE, MemberStatus.BLOCK] } })
+			.lean()
+			.exec();
+	};
+
+
 	/** ---------- BLOCK (App Store Guideline 1.2) ---------- **/
 
 	/**

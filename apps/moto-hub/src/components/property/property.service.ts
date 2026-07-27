@@ -67,7 +67,7 @@ export class PropertyService {
 			targetProperty.meLiked = await this.likeService.checkLikeExistence(LikeInput);
     }
     
-    targetProperty.memberData = await this.memberService.getMember(null, targetProperty.memberId);
+    targetProperty.memberData = await this.memberService.getMemberForDisplay(targetProperty.memberId);
     return targetProperty;
   };
 
