@@ -21,6 +21,9 @@ import { LikeService } from "../like/like.service";
 import { Follower, Following, MeFollowed } from "../../libs/dto/follow/follow";
 import { lookupAuthMemberLiked } from "../../libs/config";
 import { OrdinaryInquiry } from "../../libs/dto/property/property.input";
+import { PropertyStatus } from "../../libs/enums/property.enum";
+import { PartStatus } from "../../libs/enums/part.enum";
+import { BoardArticleStatus } from "../../libs/enums/board-article.enum";
 import { NotificationService } from "../notification/notification.service";
 import { NotificationGroup, NotificationStatus, NotificationType } from "../../libs/enums/notification.enum";
 
@@ -32,6 +35,9 @@ export class MemberService {
 		@InjectModel('Follow') private readonly followModel: Model<Follower | Following>,
 		@InjectModel('Notification') private readonly notificationModel: Model<Notification>,
 		@InjectModel('Block') private readonly blockModel: Model<T>,
+		@InjectModel('Property') private readonly propertyModel: Model<T>,
+		@InjectModel('Part') private readonly partModel: Model<T>,
+		@InjectModel('BoardArticle') private readonly boardArticleModel: Model<T>,
     private authService:AuthService,
     private viewService: ViewService,
 	  private likeService: LikeService,
@@ -105,8 +111,11 @@ export class MemberService {
 			.exec();
 		if (!result) throw new InternalServerErrorException(Message.UPDATE_FAILED);
 
-		/** Self-deletion ends every session, on every device. */
-		if (input.memberStatus === MemberStatus.DELETE) await this.authService.revokeAllForMember(memberId);
+		/** Self-deletion ends every session and takes the member's listings with it. */
+		if (input.memberStatus === MemberStatus.DELETE) {
+			await this.authService.revokeAllForMember(memberId);
+			await this.retireMemberContent(memberId);
+		}
 
 		result.accessToken = await this.authService.createToken(result);
 		return result;
@@ -159,6 +168,42 @@ export class MemberService {
 		 }
        	return targetMember;
     };
+
+	/**
+	 * A member who leaves should not leave live listings behind — a buyer would
+	 * find a motorbike they can never ask about. Everything still on sale is
+	 * retired with the account.
+	 *
+	 * SOLD listings are left alone: those are history, not inventory.
+	 */
+	private async retireMemberContent(memberId: ObjectId): Promise<void> {
+		const deletedAt = new Date();
+		await Promise.all([
+			this.propertyModel
+				.updateMany(
+					{ memberId: memberId, propertyStatus: { $in: [PropertyStatus.ACTIVE, PropertyStatus.HOLD] } },
+					{ propertyStatus: PropertyStatus.DELETE, deletedAt: deletedAt },
+				)
+				.exec(),
+			this.partModel
+				.updateMany(
+					{ memberId: memberId, partStatus: { $in: [PartStatus.ACTIVE, PartStatus.HOLD] } },
+					{ partStatus: PartStatus.DELETE, deletedAt: deletedAt },
+				)
+				.exec(),
+			this.boardArticleModel
+				.updateMany(
+					{ memberId: memberId, articleStatus: BoardArticleStatus.ACTIVE },
+					{ articleStatus: BoardArticleStatus.DELETE },
+				)
+				.exec(),
+		]);
+
+		await this.memberModel
+			.findByIdAndUpdate(memberId, { memberProperties: 0, memberParts: 0, memberArticles: 0 })
+			.exec();
+	};
+
 
 	/**
 	 * Owner data to hang off a listing, article or comment.
@@ -358,6 +403,7 @@ export class MemberService {
 		 * otherwise a block or a demotion would idle until the access token expired.
 		 */
 		if (input.memberStatus || input.memberType) await this.authService.revokeAllForMember(result._id);
+		if (input.memberStatus === MemberStatus.DELETE) await this.retireMemberContent(result._id);
 
 		return result;
 	};
