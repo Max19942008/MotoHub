@@ -2,7 +2,7 @@ import { Mutation, Resolver, Query, Args } from '@nestjs/graphql';
 import { MemberService } from './member.service';
 import { InternalServerErrorException, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { AgentsInquiry, LoginInput, MemberInput, MembersInquiry } from '../../libs/dto/member/member.input';
-import { Member, Members } from '../../libs/dto/member/member';
+import { AuthTokens, Member, Members } from '../../libs/dto/member/member';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { AuthMember } from '../auth/decorators/authMember.decorator';
 import { ObjectId } from 'mongoose';
@@ -16,6 +16,7 @@ import { shapeIntoMongoObjectId, getSerialForImage, validMimeTypes  } from '../.
 import { GraphQLUpload, FileUpload } from 'graphql-upload';
 import { createWriteStream } from 'fs';
 import { Message } from '../../libs/enums/common.enum';
+import { OrdinaryInquiry } from '../../libs/dto/property/property.input';
 
 
 @Resolver()
@@ -46,6 +47,24 @@ export class MemberResolver {
    console.log("Error, signup:",err)
    throw new InternalServerErrorException(err);
     }
+  };
+
+
+  /**
+   * Access tokens are short-lived, so the client trades this refresh token for a
+   * new pair. Single-use: the presented token is consumed and replaced.
+   */
+  @Mutation(() => AuthTokens)
+  public async refreshToken(@Args("refreshToken") refreshToken: string): Promise<AuthTokens> {
+    console.log("Mutation:refreshToken");
+    return await this.memberService.refreshTokens(refreshToken);
+  };
+
+
+  @Mutation(() => Boolean)
+  public async logout(@Args("refreshToken") refreshToken: string): Promise<boolean> {
+    console.log("Mutation:logout");
+    return await this.memberService.logout(refreshToken);
   };
 
 
@@ -109,6 +128,43 @@ export class MemberResolver {
 		return await this.memberService.likeTargetMember(memberId, likeRefId);
 	};
 	
+
+  /** BLOCK — App Store Guideline 1.2 requires a way to block abusive users **/
+
+	@UseGuards(AuthGuard)
+	@Mutation(() => Boolean)
+	public async blockMember(
+		@Args('memberId') input: string,
+		@AuthMember('_id') memberId: ObjectId,
+	): Promise<boolean> {
+		console.log('Mutation: blockMember');
+		const blockedId = shapeIntoMongoObjectId(input);
+		return await this.memberService.blockMember(memberId, blockedId);
+	};
+
+
+	@UseGuards(AuthGuard)
+	@Mutation(() => Boolean)
+	public async unblockMember(
+		@Args('memberId') input: string,
+		@AuthMember('_id') memberId: ObjectId,
+	): Promise<boolean> {
+		console.log('Mutation: unblockMember');
+		const blockedId = shapeIntoMongoObjectId(input);
+		return await this.memberService.unblockMember(memberId, blockedId);
+	};
+
+
+	@UseGuards(AuthGuard)
+	@Query(() => Members)
+	public async getBlockedMembers(
+		@Args('input') input: OrdinaryInquiry,
+		@AuthMember('_id') memberId: ObjectId,
+	): Promise<Members> {
+		console.log('Query: getBlockedMembers');
+		return await this.memberService.getBlockedMembers(memberId, input);
+	};
+
 
   /** ADMIN **/
 	@Roles(MemberType.ADMIN)

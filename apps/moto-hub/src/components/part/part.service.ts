@@ -17,7 +17,7 @@ import { LikeGroup } from '../../libs/enums/like.enum';
 import { NotificationGroup, NotificationStatus, NotificationType } from '../../libs/enums/notification.enum';
 import { LikeInput } from '../../libs/dto/like/like.input';
 import { StatisticModifier, T } from '../../libs/types/common';
-import { lookupAuthMemberLiked, lookupMember, shapeIntoMongoObjectId } from '../../libs/config';
+import { applyBlockFilter, lookupAuthMemberLiked, lookupMember, shapeIntoMongoObjectId } from '../../libs/config';
 
 @Injectable()
 export class PartService {
@@ -94,6 +94,7 @@ export class PartService {
 		const sort: T = { [input?.sort ?? 'createdAt']: input?.direction ?? Direction.DESC };
 
 		this.shapeMatchQuery(match, input);
+		applyBlockFilter(match, await this.memberService.getBlockedMemberIds(memberId));
 		console.log('match:', match);
 
 		const result = await this.partModel

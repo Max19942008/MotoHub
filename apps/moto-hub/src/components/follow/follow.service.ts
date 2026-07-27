@@ -159,9 +159,9 @@ export class FollowService {
     },
   ]).exec();
 
-   if (!result.length || !result[0].list?.length) {
-    throw new InternalServerErrorException(Message.NO_DATA_FOUND);
-  }
+   // A member with no followers yet is a normal state, not an error — the mobile
+   // list would otherwise blow up on every empty page.
+   if (!result.length) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
   return result[0];
 };
 

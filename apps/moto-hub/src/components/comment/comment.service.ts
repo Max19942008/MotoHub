@@ -8,7 +8,7 @@ import { Direction, Message } from '../../libs/enums/common.enum';
 import { CommentGroup, CommentStatus } from '../../libs/enums/comment.enum';
 import { BoardArticleService } from '../board-article/board-article.service';
 import { T } from '../../libs/types/common';
-import { lookupMember } from '../../libs/config';
+import { applyBlockFilter, lookupMember } from '../../libs/config';
 import { CommentInput, CommentsInquiry } from '../../libs/dto/comment/comment.input';
 import { CommentUpdate } from '../../libs/dto/comment/comment.update';
 import { Comments,Comment } from '../../libs/dto/comment/comment';
@@ -83,6 +83,8 @@ export class CommentService {
     const { commentRefId } = input.search;
     const match: T = { commentRefId: commentRefId, commentStatus: CommentStatus.ACTIVE };
     const sort: T = { [input?.sort ?? 'createdAt']: input?.direction ?? Direction.DESC };
+
+    applyBlockFilter(match, await this.memberService.getBlockedMemberIds(memberId));
 
     const result: Comments[] = await this.commentModel.aggregate([
         { $match: match },

@@ -11,6 +11,7 @@ import { NotificationGroup, NotificationStatus, NotificationType } from "../../l
 import { MemberStatus, MemberType } from "../../libs/enums/member.enum";
 import { MailService } from "./channels/mail.service";
 import { TelegramService } from "./channels/telegram.service";
+import { PushService } from "./channels/push.service";
 
 
 @Injectable()
@@ -20,6 +21,7 @@ export class NotificationService  {
 		@InjectModel('Member') private readonly memberModel: Model<Member>,
 		private readonly mailService: MailService,
 		private readonly telegramService: TelegramService,
+		private readonly pushService: PushService,
 	) {}
 
 	/**
@@ -118,12 +120,35 @@ export class NotificationService  {
 	}
 
 	public async createNotification(input: NotificationInput): Promise<Notification> {
+		let created: Notification;
 		try {
-			return await this.notificationModel.create(input);
+			created = await this.notificationModel.create(input);
 		} catch (err: any) {
 			console.log('Error: NotificationService.createNotification', err.message);
 			throw new BadRequestException(Message.CREATE_FAILED);
 		}
+
+		/** Push is best-effort — it must never fail the action that produced the notification. */
+		this.pushService
+			.sendToMember(input.receiverId, input.notificationTitle, input.notificationDesc, {
+				notificationId: String(created['_id']),
+				notificationGroup: input.notificationGroup,
+				notificationType: input.notificationType,
+				propertyId: input.propertyId ? String(input.propertyId) : null,
+				partId: input.partId ? String(input.partId) : null,
+				articleId: input.articleId ? String(input.articleId) : null,
+			})
+			.catch((err) => console.log('push err:', err?.message));
+
+		return created;
+	};
+
+	public async registerDevice(memberId: ObjectId, deviceToken: string, devicePlatform: string): Promise<boolean> {
+		return await this.pushService.registerDevice(memberId, deviceToken, devicePlatform);
+	};
+
+	public async unregisterDevice(memberId: ObjectId, deviceToken: string): Promise<boolean> {
+		return await this.pushService.unregisterDevice(memberId, deviceToken);
 	};
 
 	public async getNotifications(receiverId: ObjectId, input: NotificationInquiry): Promise<Notifications> {

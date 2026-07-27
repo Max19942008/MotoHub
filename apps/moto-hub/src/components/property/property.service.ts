@@ -11,7 +11,7 @@ import { AgentPropertiesInquiry, AllPropertiesInquiry, OrdinaryInquiry, Properti
 import { StatisticModifier, T } from '../../libs/types/common';
 import { PropertyUpdate } from '../../libs/dto/property/property.update';
 import moment from 'moment';
-import { lookupAuthMemberLiked, lookupMember, shapeIntoMongoObjectId } from '../../libs/config';
+import { applyBlockFilter, lookupAuthMemberLiked, lookupMember, shapeIntoMongoObjectId } from '../../libs/config';
 import { LikeInput } from '../../libs/dto/like/like.input';
 import { LikeGroup } from '../../libs/enums/like.enum';
 import { LikeService } from '../like/like.service';
@@ -100,6 +100,7 @@ export class PropertyService {
 		const sort: T = { [input?.sort ?? 'createdAt']: input?.direction ?? Direction.DESC };
 
 		this.shapeMatchQuery(match, input);
+		applyBlockFilter(match, await this.memberService.getBlockedMemberIds(memberId));
 		console.log('match:', match);
 		console.log('memberId:', memberId);
 

@@ -106,6 +106,16 @@ export const lookupAuthMemberFollowed = (input: LookupAuthMemberFollowed) => {
 	};
 };
 
+/**
+ * Drops blocked members' content out of a list query. Combines with an existing
+ * memberId filter instead of overwriting it, so "this agent's listings" and
+ * "not from anyone I blocked" can both apply.
+ */
+export const applyBlockFilter = (match: T, blockedIds: T[]): void => {
+	if (!blockedIds?.length) return;
+	match.memberId = match.memberId ? { $eq: match.memberId, $nin: blockedIds } : { $nin: blockedIds };
+};
+
 export const lookupMember = {
 	$lookup: {
 		from: 'members',

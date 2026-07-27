@@ -10,7 +10,7 @@ import { StatisticModifier, T } from '../../libs/types/common';
 import { BoardArticleStatus } from '../../libs/enums/board-article.enum';
 import { ViewGroup } from '../../libs/enums/view.enum';
 import { BoardArticleUpdate } from '../../libs/dto/board-article/board-article.update';
-import { lookupAuthMemberLiked, lookupMember, shapeIntoMongoObjectId } from '../../libs/config';
+import { applyBlockFilter, lookupAuthMemberLiked, lookupMember, shapeIntoMongoObjectId } from '../../libs/config';
 import { LikeService } from '../like/like.service';
 import { LikeInput } from '../../libs/dto/like/like.input';
 import { LikeGroup } from '../../libs/enums/like.enum';
@@ -99,6 +99,7 @@ public async getBoardArticles(memberId: ObjectId, input: BoardArticlesInquiry): 
     if (text) match.articleTitle = { $regex: new RegExp(text, 'i') };
     if (input.search?.memberId)
         match.memberId = shapeIntoMongoObjectId(input.search.memberId);
+    applyBlockFilter(match, await this.memberService.getBlockedMemberIds(memberId));
         console.log('match:', match);
 
     const result = await this.boardArticleModel.aggregate([

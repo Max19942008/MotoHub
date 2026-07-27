@@ -9,11 +9,13 @@ import { LikeModule } from '../like/like.module';
 import FollowSchema from '../../schemas/Follow.model';
 import { NotificationModule } from '../notification/notification.module';
 import NotificationSchema from '../../schemas/Notification.model';
+import BlockSchema from '../../schemas/Block.model';
 
 @Module({
   imports: [ MongooseModule.forFeature([{name:"Member",schema: MemberSchema }]),
    MongooseModule.forFeature( [ { name:"Follow",schema: FollowSchema } ] ),
   MongooseModule.forFeature( [ { name:"Notification",schema: NotificationSchema } ] ),
+  MongooseModule.forFeature( [ { name:"Block",schema: BlockSchema } ] ),
   AuthModule,
   ViewModule,
   LikeModule,

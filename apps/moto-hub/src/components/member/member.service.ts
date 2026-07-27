@@ -5,7 +5,7 @@ import {
 } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model, ObjectId } from "mongoose";
-import { Member, Members } from "../../libs/dto/member/member";
+import { AuthTokens, Member, Members } from "../../libs/dto/member/member";
 import { AgentsInquiry, LoginInput, MemberInput, MembersInquiry } from "../../libs/dto/member/member.input";
 import { MemberStatus, MemberType } from "../../libs/enums/member.enum";
 import { Direction, Message } from "../../libs/enums/common.enum";
@@ -20,6 +20,7 @@ import { LikeGroup } from "../../libs/enums/like.enum";
 import { LikeService } from "../like/like.service";
 import { Follower, Following, MeFollowed } from "../../libs/dto/follow/follow";
 import { lookupAuthMemberLiked } from "../../libs/config";
+import { OrdinaryInquiry } from "../../libs/dto/property/property.input";
 import { NotificationService } from "../notification/notification.service";
 import { NotificationGroup, NotificationStatus, NotificationType } from "../../libs/enums/notification.enum";
 
@@ -30,6 +31,7 @@ export class MemberService {
     @InjectModel("Member") private readonly memberModel: Model<Member>,
 		@InjectModel('Follow') private readonly followModel: Model<Follower | Following>,
 		@InjectModel('Notification') private readonly notificationModel: Model<Notification>,
+		@InjectModel('Block') private readonly blockModel: Model<T>,
     private authService:AuthService,
     private viewService: ViewService,
 	  private likeService: LikeService,
@@ -45,8 +47,9 @@ export class MemberService {
     try {
       const result = await this.memberModel.create(input);
       // TODO: Authentication via Token
-       result.accessToken = await this.authService.createToken(result);
-       
+      const tokens = await this.authService.issueTokenPair(result);
+      result.accessToken = tokens.accessToken;
+      result.refreshToken = tokens.refreshToken;
 
       return result;
     } catch (err: any) {
@@ -69,10 +72,22 @@ export class MemberService {
 
     const isMatch = await this.authService.comparePasswords(input.memberPassword, response.memberPassword);
 		if (!isMatch) throw new InternalServerErrorException(Message.WRONG_PASSWORD);
-		response.accessToken = await this.authService.createToken(response);
+		const tokens = await this.authService.issueTokenPair(response);
+		response.accessToken = tokens.accessToken;
+		response.refreshToken = tokens.refreshToken;
 
     return response;
   };
+
+	/** Exchanges a refresh token for a new pair; also the point where a blocked or
+	 *  demoted member stops getting valid access tokens. */
+	public async refreshTokens(refreshToken: string): Promise<AuthTokens> {
+		return await this.authService.rotateTokens(refreshToken);
+	};
+
+	public async logout(refreshToken: string): Promise<boolean> {
+		return await this.authService.revokeRefreshToken(refreshToken);
+	};
 
 
  	public async updateMember(memberId: ObjectId, input: MemberUpdate): Promise<Member> {
@@ -89,6 +104,9 @@ export class MemberService {
 			.findOneAndUpdate({ _id: memberId, memberStatus: MemberStatus.ACTIVE }, input, { new: true })
 			.exec();
 		if (!result) throw new InternalServerErrorException(Message.UPDATE_FAILED);
+
+		/** Self-deletion ends every session, on every device. */
+		if (input.memberStatus === MemberStatus.DELETE) await this.authService.revokeAllForMember(memberId);
 
 		result.accessToken = await this.authService.createToken(result);
 		return result;
@@ -141,6 +159,78 @@ export class MemberService {
 		 }
        	return targetMember;
     };
+
+	/** ---------- BLOCK (App Store Guideline 1.2) ---------- **/
+
+	/**
+	 * Hides a member's content from the blocker. One-directional: the blocked
+	 * member is not told and keeps seeing the blocker — mirroring it would leak
+	 * the fact that a block happened.
+	 */
+	public async blockMember(blockerId: ObjectId, blockedId: ObjectId): Promise<boolean> {
+		if (blockerId.toString() === blockedId.toString()) throw new BadRequestException(Message.NOT_ALLOWED_REQUEST);
+
+		const target = await this.memberModel.findById(blockedId).select('_id').lean().exec();
+		if (!target) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
+
+		await this.blockModel
+			.findOneAndUpdate(
+				{ blockerId: blockerId, blockedId: blockedId },
+				{ blockerId: blockerId, blockedId: blockedId },
+				{ upsert: true },
+			)
+			.exec();
+		return true;
+	};
+
+	public async unblockMember(blockerId: ObjectId, blockedId: ObjectId): Promise<boolean> {
+		await this.blockModel.deleteOne({ blockerId: blockerId, blockedId: blockedId }).exec();
+		return true;
+	};
+
+	/**
+	 * Ids whose content the given member should not see. Returns [] for guests,
+	 * so callers can pass an unauthenticated id without branching.
+	 */
+	public async getBlockedMemberIds(blockerId: ObjectId): Promise<ObjectId[]> {
+		if (!blockerId) return [];
+		const rows = await this.blockModel.find({ blockerId: blockerId }).select('blockedId').lean().exec();
+		return rows.map((row: T) => row.blockedId);
+	};
+
+	public async getBlockedMembers(blockerId: ObjectId, input: OrdinaryInquiry): Promise<Members> {
+		const { page, limit } = input;
+		const result = await this.blockModel
+			.aggregate([
+				{ $match: { blockerId: blockerId } },
+				{ $sort: { createdAt: Direction.DESC } },
+				{
+					$facet: {
+						list: [
+							{ $skip: (page - 1) * limit },
+							{ $limit: limit },
+							{
+								$lookup: {
+									from: 'members',
+									localField: 'blockedId',
+									foreignField: '_id',
+									as: 'blockedData',
+								},
+							},
+							{ $unwind: '$blockedData' },
+						],
+						metaCounter: [{ $count: 'total' }],
+					},
+				},
+			])
+			.exec();
+
+		return {
+			list: (result[0]?.list ?? []).map((ele: T) => ele.blockedData),
+			metaCounter: result[0]?.metaCounter ?? [],
+		};
+	};
+
 
 		private async checkSubscription(followerId: ObjectId, followingId: ObjectId): Promise<MeFollowed[]> {
 		const result = await this.followModel.findOne({ followingId: followingId, followerId: followerId }).exec();
@@ -245,6 +335,14 @@ export class MemberService {
 		await this.releaseUniqueFieldsOnDelete(input._id, input);
 		const result: Member = await this.memberModel.findByIdAndUpdate({ _id: input._id }, input, { new: true }).exec();
 		if (!result) throw new InternalServerErrorException(Message.UPDATE_FAILED);
+
+		/**
+		 * Moderation must bite immediately. Dropping the sessions forces the member
+		 * back through refresh, which re-reads role and status from the database —
+		 * otherwise a block or a demotion would idle until the access token expired.
+		 */
+		if (input.memberStatus || input.memberType) await this.authService.revokeAllForMember(result._id);
+
 		return result;
 	};
 

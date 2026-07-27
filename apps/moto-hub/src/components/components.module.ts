@@ -9,6 +9,7 @@ import { BoardArticleModule } from './board-article/board-article.module';
 import { FollowModule } from './follow/follow.module';
 import { NotificationModule } from './notification/notification.module';
 import { PartModule } from './part/part.module';
+import { ReportModule } from './report/report.module';
 
 
 @Module({
@@ -22,7 +23,8 @@ import { PartModule } from './part/part.module';
     BoardArticleModule,
     FollowModule,
     NotificationModule,
-    PartModule],
+    PartModule,
+    ReportModule],
   providers: []
 })
 export class ComponentsModule {}

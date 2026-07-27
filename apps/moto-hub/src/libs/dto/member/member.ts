@@ -91,7 +91,11 @@ export class Member {
   updatedAt: Date;
 
    @Field(() => String,{nullable:true})
-   accessToken?: string; 
+   accessToken?: string;
+
+   /** Long-lived, single-use session token — exchanged via the refreshToken mutation. */
+   @Field(() => String,{nullable:true})
+   refreshToken?: string;
 
 
   /** from aggregration **/
@@ -104,6 +108,16 @@ export class Member {
 }
 
 
+
+
+@ObjectType()
+export class AuthTokens {
+  @Field(() => String)
+  accessToken: string;
+
+  @Field(() => String)
+  refreshToken: string;
+}
 
 
 @ObjectType()
