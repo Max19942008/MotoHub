@@ -11,7 +11,7 @@ import { MemberType } from '../../libs/enums/member.enum';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { MemberUpdate } from '../../libs/dto/member/member.update';
 import { WithoutGuard } from '../auth/guards/without.guard';
-import { shapeIntoMongoObjectId, getSerialForImage, validMimeTypes  } from '../../libs/config';
+import { shapeIntoMongoObjectId, getSerialForImage, validMimeTypes, ensureUploadDir  } from '../../libs/config';
 
 import { GraphQLUpload, FileUpload } from 'graphql-upload';
 import { createWriteStream } from 'fs';
@@ -201,7 +201,7 @@ export class MemberResolver {
 		if (!validMime) throw new Error(Message.PROVIDE_ALLOWED_FORMAT);
 
 		const imageName = getSerialForImage(filename);
-		const url = `uploads/${target}/${imageName}`;
+		const url = `${ensureUploadDir(target)}/${imageName}`;
 		const stream = createReadStream();
 
 		const result = await new Promise((resolve, reject) => {
@@ -227,7 +227,9 @@ export class MemberResolver {
 
 		if (!/^[a-zA-Z0-9_-]+$/.test(target)) throw new Error(Message.UPLOAD_FAILED);
 
+		const uploadDir = ensureUploadDir(target);
 		const uploadedImages: string[] = [];
+		let lastError: string | null = null;
 
 		const promisedList = files.map(async (img: Promise<FileUpload>, index: number) => {
 			try {
@@ -237,7 +239,7 @@ export class MemberResolver {
 				if (!validMime) throw new Error(Message.PROVIDE_ALLOWED_FORMAT);
 
 				const imageName = getSerialForImage(filename);
-				const url = `uploads/${target}/${imageName}`;
+				const url = `${uploadDir}/${imageName}`;
 				const stream = createReadStream();
 
 				await new Promise((resolve, reject) => {
@@ -246,12 +248,19 @@ export class MemberResolver {
 
 				uploadedImages[index] = url;
 			} catch (err: any) {
+				lastError = err.message;
 				console.error('Upload failed:', err.message);
 			}
 		});
 
 		await Promise.all(promisedList);
-		return uploadedImages.filter(Boolean); // ✅ null/undefined yo‘q
+		const saved = uploadedImages.filter(Boolean);
+
+		/** Returning an empty list looked like success to the client and left the
+		 *  form stuck with no images and no explanation. Say what went wrong. */
+		if (!saved.length) throw new Error(lastError ?? Message.UPLOAD_FAILED);
+
+		return saved;
 	};
 
 

@@ -26,12 +26,29 @@ export const availablePartSorts = [
 /** IMAGE CONFIGURATION  **/
 import { v4 as uuidv4 } from 'uuid';
 import * as path from 'path';
+import * as fs from 'fs';
 import { T } from './types/common';
 
 export const validMimeTypes = ['image/png', 'image/jpg', 'image/jpeg'];
 export const getSerialForImage = (filename: string) => {
 	const ext = path.parse(filename).ext;
 	return uuidv4() + ext;
+};
+
+/**
+ * createWriteStream will not create parent folders. When the parts module was
+ * added nobody made `uploads/part` on the server, so every part image failed to
+ * write — silently, because the uploader logs per-file errors and returns the
+ * survivors. Creating the folder on demand means a new target never needs a
+ * manual mkdir in production again.
+ *
+ * `target` is already restricted to [a-zA-Z0-9_-] by the resolver, so it cannot
+ * escape the uploads directory.
+ */
+export const ensureUploadDir = (target: string): string => {
+	const dir = path.join('uploads', target);
+	if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+	return dir;
 };
 
 export const shapeIntoMongoObjectId = (target: any) => {
