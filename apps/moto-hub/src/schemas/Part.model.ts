@@ -7,6 +7,7 @@ import {
 	PartStatus,
 	PartType,
 } from '../libs/enums/part.enum';
+import { Currency } from '../libs/enums/currency.enum';
 
 const PartSchema = new Schema(
 	{
@@ -54,6 +55,13 @@ const PartSchema = new Schema(
 		partPrice: {
 			type: Number,
 			required: true,
+		},
+
+		/** Existing listings were all priced in dollars, hence the default. */
+		partCurrency: {
+			type: String,
+			enum: Currency,
+			default: Currency.USD,
 		},
 
 		partStockCount: {

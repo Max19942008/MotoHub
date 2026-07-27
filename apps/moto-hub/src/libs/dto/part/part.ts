@@ -10,6 +10,7 @@ import {
 } from '../../enums/part.enum';
 import { Member, TotalCounter } from '../member/member';
 import { MeLiked } from '../like/like';
+import { Currency } from '../../enums/currency.enum';
 
 @ObjectType()
 export class Part {
@@ -39,6 +40,9 @@ export class Part {
 
 	@Field(() => Number)
 	partPrice: number;
+
+	@Field(() => Currency)
+	partCurrency: Currency;
 
 	@Field(() => Int)
 	partStockCount: number;

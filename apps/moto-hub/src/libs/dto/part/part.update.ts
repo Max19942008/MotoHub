@@ -9,6 +9,7 @@ import {
 	PartStatus,
 	PartType,
 } from '../../enums/part.enum';
+import { Currency } from '../../enums/currency.enum';
 
 @InputType()
 export class PartUpdate {
@@ -48,6 +49,10 @@ export class PartUpdate {
 	@IsOptional()
 	@Field(() => Int, { nullable: true })
 	partPrice?: number;
+
+	@IsOptional()
+	@Field(() => Currency, { nullable: true })
+	partCurrency?: Currency;
 
 	@IsOptional()
 	@IsInt()

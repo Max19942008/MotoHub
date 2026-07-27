@@ -12,6 +12,7 @@ import {
 import { Direction } from '../../enums/common.enum';
 import { availablePartOptions, availablePartSorts } from '../../config';
 import { PeriodsRange, PricesRange } from '../property/property.input';
+import { Currency } from '../../enums/currency.enum';
 
 @InputType()
 export class PartInput {
@@ -43,6 +44,10 @@ export class PartInput {
 	@IsNotEmpty()
 	@Field(() => Int)
 	partPrice: number;
+
+	@IsOptional()
+	@Field(() => Currency, { nullable: true })
+	partCurrency?: Currency;
 
 	@IsOptional()
 	@IsInt()

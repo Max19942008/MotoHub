@@ -1,5 +1,6 @@
 import { Schema } from 'mongoose';
 import { PropertyBrand, PropertyCondition, PropertyLocation, PropertyStatus, PropertyType } from '../libs/enums/property.enum';
+import { Currency } from '../libs/enums/currency.enum';
 
 const PropertySchema = new Schema(
 	{
@@ -46,6 +47,13 @@ const PropertySchema = new Schema(
 		propertyPrice: {
 			type: Number,
 			required: true,
+		},
+
+		/** Existing listings were all priced in dollars, hence the default. */
+		propertyCurrency: {
+			type: String,
+			enum: Currency,
+			default: Currency.USD,
 		},
 
 		propertyYear: {

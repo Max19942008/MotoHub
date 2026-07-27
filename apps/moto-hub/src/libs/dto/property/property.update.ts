@@ -2,6 +2,7 @@ import { InputType, Field, Int } from '@nestjs/graphql';
 import { IsInt, IsNotEmpty, IsOptional, Length, Min } from 'class-validator';
 import { ObjectId } from 'mongoose';
 import { PropertyBrand, PropertyCondition, PropertyLocation, PropertyStatus, PropertyType } from '../../enums/property.enum';
+import { Currency } from '../../enums/currency.enum';
 
 
 @InputType()
@@ -43,6 +44,10 @@ import { PropertyBrand, PropertyCondition, PropertyLocation, PropertyStatus, Pro
   @IsOptional()
   @Field(() => Number, { nullable: true })
   propertyPrice?: number;
+
+  @IsOptional()
+  @Field(() => Currency, { nullable: true })
+  propertyCurrency?: Currency;
 
   @IsOptional()
   @Field(() => Number, { nullable: true })

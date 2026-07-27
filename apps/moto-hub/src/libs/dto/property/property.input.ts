@@ -5,6 +5,7 @@ import { ObjectId } from "mongoose";
 // import { availableOptions, availablePropertySorts } from "../../config";
 import { Direction } from "../../enums/common.enum";
 import { availableOptions, availablePropertySorts } from "../../config";
+import { Currency } from '../../enums/currency.enum';
 
 
 
@@ -39,6 +40,10 @@ export class PropertyInput {
 @IsNotEmpty()
  @Field(() => Int)
  propertyPrice: number;
+
+ @IsOptional()
+ @Field(() => Currency, { nullable: true })
+ propertyCurrency?: Currency;
 
  @IsNotEmpty()
  @Field(() => Int)

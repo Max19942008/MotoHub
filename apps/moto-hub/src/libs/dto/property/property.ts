@@ -4,6 +4,7 @@ import { MemberAuthType, MemberStatus, MemberType } from "../../enums/member.enu
 import { PropertyBrand, PropertyCondition, PropertyLocation, PropertyStatus, PropertyType } from "../../enums/property.enum";
 import { Member, TotalCounter } from "../member/member";
 import { MeLiked } from "../like/like";
+import { Currency } from '../../enums/currency.enum';
 // import { MeLiked } from "../like/like";
 
 
@@ -40,6 +41,9 @@ export class Property {
 
      @Field(() => Number)
    propertyPrice: number;
+
+   @Field(() => Currency)
+   propertyCurrency: Currency;
 
      @Field(() => Number)
    propertyYear: number;
