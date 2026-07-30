@@ -43,8 +43,8 @@ export class PropertyService {
        return result;
     
        } catch(err: any) {
-       console.log("Error,Service.model:",err.message);
-        throw new BadRequestException(Message.UPDATE_FAILED)
+       console.log("Error, PropertyService.createProperty:",err.message);
+        throw new BadRequestException(Message.CREATE_FAILED)
        }
   };
   
@@ -73,17 +73,20 @@ export class PropertyService {
 
   
 	public async updateProperty(memberId: ObjectId, input: PropertyUpdate): Promise<Property> {
-		let { propertyStatus, soldAt, deletedAt } = input;
+		const { propertyStatus } = input;
 		const search = { _id: input._id, memberId,propertyStatus:PropertyStatus.ACTIVE};
 
-		if (propertyStatus === PropertyStatus.SOLD) soldAt = moment().toDate();
-		else if (propertyStatus === PropertyStatus.DELETE) deletedAt = moment().toDate();
+		/** The timestamp has to land on `input` — that is the document actually
+		 *  written. Assigning to a destructured copy left soldAt/deletedAt null
+		 *  on every sold or deleted listing. */
+		if (propertyStatus === PropertyStatus.SOLD) input.soldAt = moment().toDate();
+		else if (propertyStatus === PropertyStatus.DELETE) input.deletedAt = moment().toDate();
 
 		const result = await this.propertyModel.findOneAndUpdate(search, input, { new: true }).exec();
 
 		if (!result) throw new InternalServerErrorException(Message.UPDATE_FAILED);
 
-		if (soldAt || deletedAt) {
+		if (input.soldAt || input.deletedAt) {
 			await this.memberService.memberStatsEditer({
 				_id: memberId,
 				targetKey: 'memberProperties',
@@ -302,16 +305,16 @@ export class PropertyService {
 
 
   	public async updatePropertyByAdmin(input: PropertyUpdate): Promise<Property> {
-		let { propertyStatus, soldAt, deletedAt } = input;
+		const { propertyStatus } = input;
 		const search: T = { _id: input._id, propertyStatus: PropertyStatus.ACTIVE };
 
-		if (propertyStatus === PropertyStatus.SOLD) soldAt = moment().toDate();
-		else if (propertyStatus === PropertyStatus.DELETE) deletedAt = moment().toDate();
+		if (propertyStatus === PropertyStatus.SOLD) input.soldAt = moment().toDate();
+		else if (propertyStatus === PropertyStatus.DELETE) input.deletedAt = moment().toDate();
 
 		const result = await this.propertyModel.findOneAndUpdate(search, input, { new: true }).exec();
 		if (!result) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
 
-		if (soldAt || deletedAt) {
+		if (input.soldAt || input.deletedAt) {
 			await this.memberService.memberStatsEditer({
 				_id: result.memberId,
 				targetKey: 'memberProperties',

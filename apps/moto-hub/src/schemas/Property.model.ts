@@ -131,6 +131,18 @@ const PropertySchema = new Schema(
 	{ timestamps: true, collection: 'properties' },
 );
 
-PropertySchema.index({ propertyType: 1, propertyLocation: 1, propertyTitle: 1, propertyPrice: 1 }, { unique: true });
+/**
+ * Lookup index only — deliberately NOT unique.
+ *
+ * It used to be unique on {type, location, title, price}, which meant two
+ * different sellers could not list the same bike at the same price in the same
+ * region, and a soft-deleted listing kept its own slot forever so the owner
+ * could never re-post it. Mirrors the Part index, which was always plain.
+ *
+ * NOTE: dropping `unique` here does not drop the existing index in MongoDB.
+ * Run once against the prod database:
+ *   db.properties.dropIndex('propertyType_1_propertyLocation_1_propertyTitle_1_propertyPrice_1')
+ */
+PropertySchema.index({ propertyType: 1, propertyLocation: 1, propertyTitle: 1, propertyPrice: 1, memberId: 1 });
 
 export default PropertySchema;

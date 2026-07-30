@@ -23,9 +23,15 @@ import { Currency } from '../../enums/currency.enum';
   @Field(() => PropertyLocation, { nullable: true })
   propertyLocation?: PropertyLocation;
 
-  @IsNotEmpty()
-   @Field(() => PropertyBrand)
-  propertyBrand: PropertyBrand;
+  /**
+   * Optional like every other field here. It used to be required, which made a
+   * partial update impossible: "mark as sold" and "delete my listing" send only
+   * _id and the new status, so the mutation was rejected before it ever reached
+   * the resolver.
+   */
+  @IsOptional()
+  @Field(() => PropertyBrand, { nullable: true })
+  propertyBrand?: PropertyBrand;
 
    @IsOptional()
   @Field(() => PropertyCondition, { nullable: true })

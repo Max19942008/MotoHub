@@ -69,16 +69,17 @@ export class PartService {
 	}
 
 	public async updatePart(memberId: ObjectId, input: PartUpdate): Promise<Part> {
-		let { partStatus, soldAt, deletedAt } = input;
+		const { partStatus } = input;
 		const search = { _id: input._id, memberId, partStatus: PartStatus.ACTIVE };
 
-		if (partStatus === PartStatus.SOLD) soldAt = moment().toDate();
-		else if (partStatus === PartStatus.DELETE) deletedAt = moment().toDate();
+		/** Write onto `input` — that is the document handed to Mongo. */
+		if (partStatus === PartStatus.SOLD) input.soldAt = moment().toDate();
+		else if (partStatus === PartStatus.DELETE) input.deletedAt = moment().toDate();
 
 		const result = await this.partModel.findOneAndUpdate(search, input, { new: true }).exec();
 		if (!result) throw new InternalServerErrorException(Message.UPDATE_FAILED);
 
-		if (soldAt || deletedAt) {
+		if (input.soldAt || input.deletedAt) {
 			await this.memberService.memberStatsEditer({
 				_id: memberId,
 				targetKey: 'memberParts',
@@ -266,16 +267,16 @@ export class PartService {
 	}
 
 	public async updatePartByAdmin(input: PartUpdate): Promise<Part> {
-		let { partStatus, soldAt, deletedAt } = input;
+		const { partStatus } = input;
 		const search: T = { _id: input._id, partStatus: PartStatus.ACTIVE };
 
-		if (partStatus === PartStatus.SOLD) soldAt = moment().toDate();
-		else if (partStatus === PartStatus.DELETE) deletedAt = moment().toDate();
+		if (partStatus === PartStatus.SOLD) input.soldAt = moment().toDate();
+		else if (partStatus === PartStatus.DELETE) input.deletedAt = moment().toDate();
 
 		const result = await this.partModel.findOneAndUpdate(search, input, { new: true }).exec();
 		if (!result) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
 
-		if (soldAt || deletedAt) {
+		if (input.soldAt || input.deletedAt) {
 			await this.memberService.memberStatsEditer({
 				_id: result.memberId,
 				targetKey: 'memberParts',
