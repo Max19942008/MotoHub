@@ -64,4 +64,12 @@ const NotificationSchema = new Schema(
 	{ timestamps: true, collection: 'notifications' },
 );
 
+/**
+ * The bell in the navbar polls every 30 seconds for every signed-in member, so
+ * this is the hottest read in the app. Without an index it was a collection
+ * scan per poll.
+ */
+NotificationSchema.index({ receiverId: 1, createdAt: -1 });
+NotificationSchema.index({ receiverId: 1, notificationStatus: 1 });
+
 export default NotificationSchema;

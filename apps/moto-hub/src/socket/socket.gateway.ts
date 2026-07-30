@@ -19,7 +19,7 @@ interface InfoPayload{
   action: string;
 }
 
-@WebSocketGateway({transprots: ["websocket"], secure: false  })
+@WebSocketGateway({ transports: ['websocket'], secure: false })
 export class SocketGateway implements OnGatewayInit {
   private logger: Logger = new Logger('SocketEventsGateWay');
   private summeryClient: number = 0 ;

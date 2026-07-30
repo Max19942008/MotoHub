@@ -1,7 +1,9 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   InternalServerErrorException,
+  UnauthorizedException,
 } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model, ObjectId } from "mongoose";
@@ -70,14 +72,16 @@ export class MemberService {
       .findOne({ memberNick: memberNick })
       .select("+memberPassword")
       .exec();
+    /** A rejected login is a client problem, not a server fault. Returning 500
+     *  here made every mistyped password look like an outage in monitoring. */
     if (!response || response.memberStatus === MemberStatus.DELETE) {
-      throw new InternalServerErrorException(Message.NO_MEMBER_NICK);
+      throw new UnauthorizedException(Message.NO_MEMBER_NICK);
     } else if (response.memberStatus === MemberStatus.BLOCK) {
-      throw new InternalServerErrorException(Message.BLOCKED_USER);
+      throw new ForbiddenException(Message.BLOCKED_USER);
     }
 
     const isMatch = await this.authService.comparePasswords(input.memberPassword, response.memberPassword);
-		if (!isMatch) throw new InternalServerErrorException(Message.WRONG_PASSWORD);
+		if (!isMatch) throw new UnauthorizedException(Message.WRONG_PASSWORD);
 		const tokens = await this.authService.issueTokenPair(response);
 		response.accessToken = tokens.accessToken;
 		response.refreshToken = tokens.refreshToken;

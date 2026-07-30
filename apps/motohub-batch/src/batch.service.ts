@@ -1,9 +1,8 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Member } from 'apps/moto-hub/src/libs/dto/member/member';
 import { Property } from 'apps/moto-hub/src/libs/dto/property/property';
 import { Part } from 'apps/moto-hub/src/libs/dto/part/part';
-import { Message } from 'apps/moto-hub/src/libs/enums/common.enum';
 import { MemberStatus, MemberType } from 'apps/moto-hub/src/libs/enums/member.enum';
 import { PropertyStatus } from 'apps/moto-hub/src/libs/enums/property.enum';
 import { PartStatus } from 'apps/moto-hub/src/libs/enums/part.enum';
@@ -71,7 +70,9 @@ export class BatchService {
             memberRank: 0,
       })
       .exec();
-      if(!agents.length) throw new InternalServerErrorException(Message.NO_DATA_FOUND)
+      /** Nothing to rank is a normal night, not a failure — throwing here logged
+       *  an error at 05:00 every time no agent had been reset. */
+      if (!agents.length) return;
 
       const promisedList = agents.map(async (ele: Member) => {
         const { _id, memberProperties, memberParts, memberLikes, memberArticles, memberViews } = ele;

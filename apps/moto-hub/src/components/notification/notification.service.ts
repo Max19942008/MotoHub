@@ -9,6 +9,7 @@ import { Property } from "../../libs/dto/property/property";
 import { T } from "../../libs/types/common";
 import { NotificationGroup, NotificationStatus, NotificationType } from "../../libs/enums/notification.enum";
 import { MemberStatus, MemberType } from "../../libs/enums/member.enum";
+import { formatPrice } from "../../libs/enums/currency.enum";
 import { MailService } from "./channels/mail.service";
 import { TelegramService } from "./channels/telegram.service";
 import { PushService } from "./channels/push.service";
@@ -57,7 +58,7 @@ export class NotificationService  {
 		const apiUrl = (process.env.API_PUBLIC_URL ?? 'http://159.223.61.65:4001').replace(/\/+$/, '');
 		const frontUrl = (process.env.FRONTEND_URL ?? 'http://159.223.61.65:4000').replace(/\/+$/, '');
 		const dash = (v: any) => (v === undefined || v === null || v === '' ? '-' : v);
-		const priceStr = property.propertyPrice != null ? `$${property.propertyPrice.toLocaleString()}` : '-';
+		const priceStr = formatPrice(property.propertyPrice, property.propertyCurrency);
 		const options =
 			[property.propertyBarter ? 'Barter' : null, property.propertyRent ? 'Rent' : null]
 				.filter(Boolean)
