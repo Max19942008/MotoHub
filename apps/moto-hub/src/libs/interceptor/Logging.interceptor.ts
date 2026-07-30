@@ -46,9 +46,16 @@ export class LoggingInterceptor implements NestInterceptor {
       );
     }
   }
-  private stringify(context: ExecutionContext): string {
-    console.log(typeof context);
+  /**
+   * Request bodies carry plaintext passwords and responses carry freshly minted
+   * tokens. Container logs outlive the request, so those values are masked
+   * before anything is written.
+   */
+  private static readonly SECRET_KEYS = ["memberPassword", "accessToken", "refreshToken", "authorization"];
 
-    return JSON.stringify(context).slice(0, 75);
+  private stringify(context: ExecutionContext): string {
+    return JSON.stringify(context, (key, value) =>
+      LoggingInterceptor.SECRET_KEYS.includes(key) ? "***" : value,
+    ).slice(0, 75);
   }
 }

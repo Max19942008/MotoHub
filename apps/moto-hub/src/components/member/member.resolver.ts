@@ -26,8 +26,9 @@ export class MemberResolver {
   @Mutation(() => Member)
   public async signup(@Args("input") input: MemberInput): Promise<Member> {
     try{
-    console.log("Mutation:signup");
-    console.log("input:",input);
+    /** Never log the raw input — it carries the plaintext password, and container
+     *  logs are kept on the server. Nick alone is enough to trace a signup. */
+    console.log("Mutation:signup", input.memberNick);
     return this.memberService.signup(input);
 
     } catch(err) {
