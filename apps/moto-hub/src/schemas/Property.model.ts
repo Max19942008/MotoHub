@@ -132,17 +132,24 @@ const PropertySchema = new Schema(
 );
 
 /**
- * Lookup index only — deliberately NOT unique.
+ * Indexes below are shaped after the queries the app actually issues. Each one
+ * names the screen it serves — if that screen goes away, drop the index with it.
  *
- * It used to be unique on {type, location, title, price}, which meant two
- * different sellers could not list the same bike at the same price in the same
- * region, and a soft-deleted listing kept its own slot forever so the owner
- * could never re-post it. Mirrors the Part index, which was always plain.
- *
- * NOTE: dropping `unique` here does not drop the existing index in MongoDB.
- * Run once against the prod database:
- *   db.properties.dropIndex('propertyType_1_propertyLocation_1_propertyTitle_1_propertyPrice_1')
+ * The old {type, location, title, price} index was replaced: $indexStats showed
+ * zero reads against it because every listing query filters on propertyStatus
+ * first, which that index did not lead with. (It was also unique, which stopped
+ * two sellers from listing the same bike at the same price in the same region.)
  */
-PropertySchema.index({ propertyType: 1, propertyLocation: 1, propertyTitle: 1, propertyPrice: 1, memberId: 1 });
+
+/** /property list — match ACTIVE, default sort createdAt DESC */
+PropertySchema.index({ propertyStatus: 1, createdAt: -1 });
+
+/** Home page: Top / Popular / Trend blocks each sort a different column */
+PropertySchema.index({ propertyStatus: 1, propertyRank: -1 });
+PropertySchema.index({ propertyStatus: 1, propertyViews: -1 });
+PropertySchema.index({ propertyStatus: 1, propertyLikes: -1 });
+
+/** "My Properties" and any agent's listing tab */
+PropertySchema.index({ memberId: 1, propertyStatus: 1, createdAt: -1 });
 
 export default PropertySchema;

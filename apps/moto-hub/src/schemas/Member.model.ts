@@ -140,4 +140,12 @@ MemberSchema.index(
   { unique: true, partialFilterExpression: { memberType: MemberType.ADMIN } },
 );
 
+/**
+ * getAgents always matches {memberType: AGENT, memberStatus: ACTIVE} and then
+ * sorts by one of a few columns. The home page uses memberRank, the /agent page
+ * defaults to createdAt and offers likes and views.
+ */
+MemberSchema.index({ memberType: 1, memberStatus: 1, memberRank: -1 });
+MemberSchema.index({ memberType: 1, memberStatus: 1, createdAt: -1 });
+
 export default MemberSchema;

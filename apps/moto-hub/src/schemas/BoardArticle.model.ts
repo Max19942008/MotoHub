@@ -53,4 +53,10 @@ const BoardArticleSchema = new Schema(
 	{ timestamps: true, collection: 'boardArticles' },
 );
 
+/** Community list — match ACTIVE, optionally one category, sort createdAt DESC */
+BoardArticleSchema.index({ articleStatus: 1, articleCategory: 1, createdAt: -1 });
+
+/** A member's own articles (profile tab and "My Articles") */
+BoardArticleSchema.index({ memberId: 1, articleStatus: 1, createdAt: -1 });
+
 export default BoardArticleSchema;

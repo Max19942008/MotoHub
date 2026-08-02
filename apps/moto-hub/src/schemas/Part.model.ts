@@ -127,6 +127,19 @@ const PartSchema = new Schema(
 	{ timestamps: true, collection: 'parts' },
 );
 
-PartSchema.index({ partCategory: 1, partType: 1, partTitle: 1, partPrice: 1, memberId: 1 });
+/**
+ * Shaped after the real queries, same as Property. The old
+ * {category, type, title, price, memberId} index read zero times in
+ * $indexStats — partStatus leads every listing query and it was not in there.
+ */
+
+/** /part list — match ACTIVE (+ category filter), default sort createdAt DESC */
+PartSchema.index({ partStatus: 1, partCategory: 1, createdAt: -1 });
+
+/** Home page: Top Spare Parts and Top Accessories, both sorted by partRank */
+PartSchema.index({ partStatus: 1, partCategory: 1, partRank: -1 });
+
+/** "My Parts" and any agent's parts tab */
+PartSchema.index({ memberId: 1, partStatus: 1, createdAt: -1 });
 
 export default PartSchema;
