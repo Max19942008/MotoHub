@@ -6,7 +6,15 @@
       "Bash(echo \"---EXIT: $?---\")",
       "Bash(powershell -Command \"Remove-Item -Recurse -Force dist -ErrorAction SilentlyContinue; Remove-Item -Recurse -Force apps/moto-hub/tsconfig.app.tsbuildinfo,apps/motohub-batch/tsconfig.app.tsbuildinfo -ErrorAction SilentlyContinue\")",
       "Bash(npm install *)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Read(//c/Users/RAKHIMBOEV BOBUR/Desktop/Ignition/libs/components/**)",
+      "Read(//c/Users/RAKHIMBOEV BOBUR/Desktop/**)",
+      "Bash(npx --yes create-expo-app@latest motopresto-app --template default --no-install)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\RAKHIMBOEV BOBUR\\Desktop\\Ignition\\public\\locales\\uz",
+      "c:\\Users\\RAKHIMBOEV BOBUR\\Desktop\\Ignition",
+      "c:\\Users\\RAKHIMBOEV BOBUR\\Desktop\\motopresto-app"
     ]
   }
 }
