@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { PropertyResolver } from './property.resolver';
 import { PropertyService } from './property.service';
 import PropertySchema from '../../schemas/Property.model';
+import InterestSchema from '../../schemas/Interest.model';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from '../auth/auth.module';
 import { ViewModule } from '../view/view.module';
@@ -13,7 +14,11 @@ import { NotificationModule } from '../notification/notification.module';
    imports:[
       MongooseModule.forFeature([
         {
-          name:"Property",schema: PropertySchema 
+          name:"Property",schema: PropertySchema
+        },
+        /** Backs notifyInterest: the duplicate guard and the meInterested flag. */
+        {
+          name:"Interest",schema: InterestSchema
         }
       ]),
         AuthModule,

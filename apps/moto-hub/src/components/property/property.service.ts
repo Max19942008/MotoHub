@@ -17,13 +17,15 @@ import { LikeGroup } from '../../libs/enums/like.enum';
 import { LikeService } from '../like/like.service';
 import { NotificationService } from '../notification/notification.service';
 import { NotificationGroup, NotificationStatus, NotificationType } from '../../libs/enums/notification.enum';
+import { MeInterested } from '../../libs/dto/interest/interest';
 
 
 
 @Injectable()
 export class PropertyService {
-  constructor(@InjectModel("Property") private readonly propertyModel:Model<Property>, 
-  private memberService: MemberService,  
+  constructor(@InjectModel("Property") private readonly propertyModel:Model<Property>,
+  @InjectModel("Interest") private readonly interestModel: Model<T>,
+  private memberService: MemberService,
   private viewService: ViewService,
 	private likeService: LikeService,
 	private notificationService: NotificationService
@@ -65,6 +67,9 @@ export class PropertyService {
      			/** ME LIKED **/
 			const LikeInput = { memberId: memberId, likeRefId: propertyId, likeGroup: LikeGroup.PROPERTY };
 			targetProperty.meLiked = await this.likeService.checkLikeExistence(LikeInput);
+
+			/** ME INTERESTED — so a returning buyer sees they already asked. **/
+			targetProperty.meInterested = await this.checkInterestExistence(memberId, propertyId);
     }
     
     targetProperty.memberData = await this.memberService.getMemberForDisplay(targetProperty.memberId);
@@ -267,8 +272,31 @@ export class PropertyService {
 		});
 		if (!target) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
 
+		/**
+		 * Interest reaches a person — mail and Telegram fire straight away — so a
+		 * second tap must not become a second message. Claiming the row first and
+		 * bailing out on the duplicate key makes the whole mutation idempotent, and
+		 * leaves behind the state the detail page reads back as `meInterested`.
+		 */
+		try {
+			await this.interestModel.create({ memberId: memberId, propertyId: propertyId });
+		} catch (err: any) {
+			if (err?.code === 11000) return true; // the dealer already knows
+			console.log('Error, PropertyService.notifyInterest:', err.message);
+			throw new InternalServerErrorException(Message.CREATE_FAILED);
+		}
+
 		const client = await this.memberService.getMember(null, memberId);
 		return await this.notificationService.notifyAdminsInterest(client, target);
+	};
+
+	private async checkInterestExistence(memberId: ObjectId, propertyId: ObjectId): Promise<MeInterested[]> {
+		const found = await this.interestModel
+			.findOne({ memberId: memberId, propertyId: propertyId })
+			.select('_id')
+			.lean()
+			.exec();
+		return found ? [{ memberId: memberId, propertyId: propertyId, myInterest: true }] : [];
 	};
 
 

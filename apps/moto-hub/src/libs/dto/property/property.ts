@@ -4,6 +4,7 @@ import { MemberAuthType, MemberStatus, MemberType } from "../../enums/member.enu
 import { PropertyBrand, PropertyCondition, PropertyLocation, PropertyStatus, PropertyType } from "../../enums/property.enum";
 import { Member, TotalCounter } from "../member/member";
 import { MeLiked } from "../like/like";
+import { MeInterested } from "../interest/interest";
 import { Currency } from '../../enums/currency.enum';
 // import { MeLiked } from "../like/like";
 
@@ -103,7 +104,11 @@ export class Property {
 
    @Field(() => [MeLiked], {nullable: true})
    meLiked?: MeLiked[];
- 
+
+   /** Whether the signed-in member has already told the dealer they want this bike. */
+   @Field(() => [MeInterested], {nullable: true})
+   meInterested?: MeInterested[];
+
 }
 
 @ObjectType()
