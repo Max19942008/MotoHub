@@ -110,12 +110,27 @@ export class NotificationService  {
 			`📝 ${dash(property.propertyDesc)}\n\n` +
 			`🔗 <a href="${detailLink}">Open listing</a>`;
 
-		await Promise.all([
+		/**
+		 * Detached on purpose. A buyer is watching a button while this runs, and
+		 * delivery is neither fast nor reliable: outbound SMTP is blocked on the
+		 * production host, so the mail leg sat on a dead socket for its full
+		 * two-minute timeout and `Promise.all` held the mutation open for every
+		 * second of it — the press looked like it had done nothing.
+		 *
+		 * The interest is already recorded by the time we get here, so nothing is
+		 * lost by letting these finish on their own; both channels already swallow
+		 * and log their own failures. Same treatment push already gets below.
+		 */
+		void Promise.allSettled([
 			this.mailService.sendToAdmin('New motorbike interest — MOTOPRESTO', html),
 			imageUrl
 				? this.telegramService.sendPhotoToAdmin(imageUrl, telegramText)
 				: this.telegramService.sendToAdmin(telegramText),
-		]);
+		]).then((results) =>
+			results
+				.filter((r) => r.status === 'rejected')
+				.forEach((r: T) => console.log('notifyAdminsInterest channel failed:', r.reason?.message)),
+		);
 
 		return true;
 	}

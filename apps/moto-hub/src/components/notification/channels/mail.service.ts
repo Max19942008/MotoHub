@@ -24,6 +24,15 @@ export class MailService {
 			this.transporter = nodemailer.createTransport({
 				service: 'gmail',
 				auth: { user, pass },
+				/**
+				 * Many hosts — DigitalOcean droplets among them — block outbound 25,
+				 * 465 and 587 by default. Without these, a blocked port is not an
+				 * error but a two-minute wait on a socket that will never connect.
+				 * Fail fast instead and let the caller move on.
+				 */
+				connectionTimeout: 10_000,
+				greetingTimeout: 10_000,
+				socketTimeout: 15_000,
 			});
 		}
 		return this.transporter;
