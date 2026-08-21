@@ -3,6 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { PartResolver } from './part.resolver';
 import { PartService } from './part.service';
 import PartSchema from '../../schemas/Part.model';
+import PartInterestSchema from '../../schemas/PartInterest.model';
 import { AuthModule } from '../auth/auth.module';
 import { ViewModule } from '../view/view.module';
 import { MemberModule } from '../member/member.module';
@@ -15,6 +16,11 @@ import { NotificationModule } from '../notification/notification.module';
 			{
 				name: 'Part',
 				schema: PartSchema,
+			},
+			/** Backs notifyPartInterest: the duplicate guard and the meInterested flag. */
+			{
+				name: 'PartInterest',
+				schema: PartInterestSchema,
 			},
 		]),
 		AuthModule,

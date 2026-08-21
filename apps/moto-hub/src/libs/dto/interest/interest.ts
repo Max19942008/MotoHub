@@ -16,3 +16,16 @@ export class MeInterested {
 	@Field(() => Boolean)
 	myInterest: boolean;
 }
+
+/** Same idea for a spare part or accessory; GraphQL needs the concrete field. */
+@ObjectType()
+export class MePartInterested {
+	@Field(() => String)
+	memberId: ObjectId;
+
+	@Field(() => String)
+	partId: ObjectId;
+
+	@Field(() => Boolean)
+	myInterest: boolean;
+}

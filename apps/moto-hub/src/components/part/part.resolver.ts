@@ -105,6 +105,17 @@ export class PartResolver {
 		return await this.partService.likeTargetPart(memberId, likeRefId);
 	}
 
+	@UseGuards(AuthGuard)
+	@Mutation(() => Boolean)
+	public async notifyPartInterest(
+		@Args('partId') input: string,
+		@AuthMember('_id') memberId: ObjectId,
+	): Promise<boolean> {
+		console.log('Mutation: notifyPartInterest');
+		const partId = shapeIntoMongoObjectId(input);
+		return await this.partService.notifyInterest(memberId, partId);
+	}
+
 	/** ADMIN **/
 
 	@Roles(MemberType.ADMIN)

@@ -18,11 +18,13 @@ import { NotificationGroup, NotificationStatus, NotificationType } from '../../l
 import { LikeInput } from '../../libs/dto/like/like.input';
 import { StatisticModifier, T } from '../../libs/types/common';
 import { applyBlockFilter, lookupAuthMemberLiked, lookupMember, shapeIntoMongoObjectId } from '../../libs/config';
+import { MePartInterested } from '../../libs/dto/interest/interest';
 
 @Injectable()
 export class PartService {
 	constructor(
 		@InjectModel('Part') private readonly partModel: Model<Part>,
+		@InjectModel('PartInterest') private readonly partInterestModel: Model<T>,
 		private memberService: MemberService,
 		private viewService: ViewService,
 		private likeService: LikeService,
@@ -62,6 +64,9 @@ export class PartService {
 			/** ME LIKED **/
 			const likeInput = { memberId: memberId, likeRefId: partId, likeGroup: LikeGroup.PART };
 			targetPart.meLiked = await this.likeService.checkLikeExistence(likeInput);
+
+			/** ME INTERESTED — so a returning buyer sees they already asked. **/
+			targetPart.meInterested = await this.checkInterestExistence(memberId, partId);
 		}
 
 		targetPart.memberData = await this.memberService.getMemberForDisplay(targetPart.memberId);
@@ -231,6 +236,36 @@ export class PartService {
 			});
 		}
 		return result;
+	}
+
+	/** Client expresses interest in a part → notify admins (in-app + Gmail + Telegram) */
+	public async notifyInterest(memberId: ObjectId, partId: ObjectId): Promise<boolean> {
+		const target: Part = await this.partModel.findOne({
+			_id: partId,
+			partStatus: PartStatus.ACTIVE,
+		});
+		if (!target) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
+
+		/** Claim the row first so a second tap is a no-op — see the bike version. */
+		try {
+			await this.partInterestModel.create({ memberId: memberId, partId: partId });
+		} catch (err: any) {
+			if (err?.code === 11000) return true; // the seller already knows
+			console.log('Error, PartService.notifyInterest:', err.message);
+			throw new InternalServerErrorException(Message.CREATE_FAILED);
+		}
+
+		const client = await this.memberService.getMember(null, memberId);
+		return await this.notificationService.notifyAdminsPartInterest(client, target);
+	}
+
+	private async checkInterestExistence(memberId: ObjectId, partId: ObjectId): Promise<MePartInterested[]> {
+		const found = await this.partInterestModel
+			.findOne({ memberId: memberId, partId: partId })
+			.select('_id')
+			.lean()
+			.exec();
+		return found ? [{ memberId: memberId, partId: partId, myInterest: true }] : [];
 	}
 
 	/** ADMIN **/

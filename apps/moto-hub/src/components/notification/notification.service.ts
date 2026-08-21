@@ -6,6 +6,7 @@ import { Direction, Message } from "../../libs/enums/common.enum";
 import { Notification, Notifications } from "../../libs/dto/notification/notification";
 import { Member } from "../../libs/dto/member/member";
 import { Property } from "../../libs/dto/property/property";
+import { Part } from "../../libs/dto/part/part";
 import { T } from "../../libs/types/common";
 import { NotificationGroup, NotificationStatus, NotificationType } from "../../libs/enums/notification.enum";
 import { MemberStatus, MemberType } from "../../libs/enums/member.enum";
@@ -130,6 +131,98 @@ export class NotificationService  {
 			results
 				.filter((r) => r.status === 'rejected')
 				.forEach((r: T) => console.log('notifyAdminsInterest channel failed:', r.reason?.message)),
+		);
+
+		return true;
+	}
+
+	/**
+	 * The parts twin of notifyAdminsInterest. A parts buyer asks a different
+	 * question than a bike buyer — what it fits and whether it is still in stock —
+	 * so the message leads with fitment and stock rather than year and mileage.
+	 */
+	public async notifyAdminsPartInterest(client: Member, part: Part): Promise<boolean> {
+		const admins = await this.memberModel
+			.find({ memberType: MemberType.ADMIN, memberStatus: MemberStatus.ACTIVE })
+			.select('_id')
+			.lean()
+			.exec();
+
+		const title = `New interest: ${client?.memberNick ?? 'A client'} is interested in "${part.partTitle}"`;
+		const desc = `${client?.memberNick ?? 'A client'} (phone: ${client?.memberPhone ?? '-'}) is interested in "${part.partTitle}".`;
+
+		for (const admin of admins) {
+			await this.createNotification({
+				notificationType: NotificationType.INTEREST,
+				notificationGroup: NotificationGroup.PART,
+				notificationStatus: NotificationStatus.WAIT,
+				notificationTitle: title,
+				notificationDesc: desc,
+				authorId: client._id,
+				receiverId: admin._id as ObjectId,
+				partId: part._id,
+			}).catch((err) => console.log('notifyAdminsPartInterest in-app err:', err?.message));
+		}
+
+		const apiUrl = (process.env.API_PUBLIC_URL ?? 'http://159.223.61.65:4001').replace(/\/+$/, '');
+		const frontUrl = (process.env.FRONTEND_URL ?? 'http://159.223.61.65:4000').replace(/\/+$/, '');
+		const dash = (v: any) => (v === undefined || v === null || v === '' ? '-' : v);
+		const priceStr = formatPrice(part.partPrice, part.partCurrency);
+		const fits = part.partCompatibleBrands?.length ? part.partCompatibleBrands.join(', ') : '-';
+		const stock = part.partStockCount > 0 ? `${part.partStockCount} pcs` : 'Out of stock';
+		const detailLink = `${frontUrl}/part/detail?id=${part._id}`;
+		const firstImage = part.partImages?.[0];
+		const imageUrl = firstImage ? `${apiUrl}/${String(firstImage).replace(/^\/+/, '')}` : null;
+
+		const html = `
+			<h3>🔧 New part interest on MOTOPRESTO</h3>
+			<h4>👤 Client</h4>
+			<p><b>Nickname:</b> ${dash(client?.memberNick)}<br/>
+			<b>Phone:</b> ${dash(client?.memberPhone)}</p>
+			<h4>🔧 Part</h4>
+			<p><b>Title:</b> ${dash(part.partTitle)}<br/>
+			<b>Category:</b> ${dash(part.partCategory)}<br/>
+			<b>Type:</b> ${dash(part.partType)}<br/>
+			<b>Brand:</b> ${dash(part.partBrand)}<br/>
+			<b>Condition:</b> ${dash(part.partCondition)}<br/>
+			<b>Price:</b> ${priceStr}<br/>
+			<b>Stock:</b> ${stock}<br/>
+			<b>Fits:</b> ${fits}<br/>
+			<b>Location:</b> ${dash(part.partLocation)}<br/>
+			<b>Barter:</b> ${part.partBarter ? 'Yes' : 'No'}</p>
+			<h4>📝 Description</h4>
+			<p>${dash(part.partDesc)}</p>
+			<p><b>Listing:</b> <a href="${detailLink}">${detailLink}</a><br/>
+			<b>Part ID:</b> ${part._id}</p>
+			${imageUrl ? `<p><img src="${imageUrl}" alt="part" style="max-width:480px;border-radius:8px"/></p>` : ''}`;
+
+		const telegramText =
+			`🔧 <b>New part interest on MOTOPRESTO</b>\n\n` +
+			`👤 <b>Client:</b> ${dash(client?.memberNick)}\n` +
+			`📞 <b>Phone:</b> ${dash(client?.memberPhone)}\n\n` +
+			`<b>${dash(part.partTitle)}</b>\n` +
+			`🗂️ Category: ${dash(part.partCategory)}\n` +
+			`🔩 Type: ${dash(part.partType)}\n` +
+			`🏷️ Brand: ${dash(part.partBrand)}\n` +
+			`🔧 Condition: ${dash(part.partCondition)}\n` +
+			`💵 Price: ${priceStr}\n` +
+			`📦 Stock: ${stock}\n` +
+			`🏍️ Fits: ${fits}\n` +
+			`📍 Location: ${dash(part.partLocation)}\n` +
+			`🔁 Barter: ${part.partBarter ? 'Yes' : 'No'}\n` +
+			`📝 ${dash(part.partDesc)}\n\n` +
+			`🔗 <a href="${detailLink}">Open listing</a>`;
+
+		/** Detached for the same reason as the bike version — see notifyAdminsInterest. */
+		void Promise.allSettled([
+			this.mailService.sendToAdmin('New part interest — MOTOPRESTO', html),
+			imageUrl
+				? this.telegramService.sendPhotoToAdmin(imageUrl, telegramText)
+				: this.telegramService.sendToAdmin(telegramText),
+		]).then((results) =>
+			results
+				.filter((r) => r.status === 'rejected')
+				.forEach((r: T) => console.log('notifyAdminsPartInterest channel failed:', r.reason?.message)),
 		);
 
 		return true;

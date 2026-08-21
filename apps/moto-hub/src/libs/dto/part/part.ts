@@ -10,6 +10,7 @@ import {
 } from '../../enums/part.enum';
 import { Member, TotalCounter } from '../member/member';
 import { MeLiked } from '../like/like';
+import { MePartInterested } from '../interest/interest';
 import { Currency } from '../../enums/currency.enum';
 
 @ObjectType()
@@ -93,6 +94,10 @@ export class Part {
 
 	@Field(() => [MeLiked], { nullable: true })
 	meLiked?: MeLiked[];
+
+	/** Whether the signed-in member has already told the seller they want this part. */
+	@Field(() => [MePartInterested], { nullable: true })
+	meInterested?: MePartInterested[];
 }
 
 @ObjectType()
