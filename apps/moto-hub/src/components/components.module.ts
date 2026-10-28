@@ -10,6 +10,7 @@ import { FollowModule } from './follow/follow.module';
 import { NotificationModule } from './notification/notification.module';
 import { PartModule } from './part/part.module';
 import { ReportModule } from './report/report.module';
+import { GoogleAuthModule } from './google-auth/google-auth.module';
 
 
 @Module({
@@ -24,7 +25,8 @@ import { ReportModule } from './report/report.module';
     FollowModule,
     NotificationModule,
     PartModule,
-    ReportModule],
+    ReportModule,
+    GoogleAuthModule],
   providers: []
 })
 export class ComponentsModule {}

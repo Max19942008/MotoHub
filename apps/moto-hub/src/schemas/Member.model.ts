@@ -1,6 +1,11 @@
 import { Schema } from "mongoose";
 import { MemberAuthType, MemberStatus, MemberType } from "../libs/enums/member.enum";
 
+/** Google members sign in without a phone or a password; for everyone else both stay mandatory. */
+const isLocalMember = function (this: { memberAuthType?: MemberAuthType }): boolean {
+  return this.memberAuthType !== MemberAuthType.GOOGLE;
+};
+
 const MemberSchema = new Schema({
 memberType:{
   type: String,
@@ -24,7 +29,7 @@ memberAuthType:{
 memberPhone: {
   type: String,
   index: { unique:true, sparse: true},
-  required:true,
+  required: isLocalMember,
 },
 
 memberNick: {
@@ -36,7 +41,14 @@ memberNick: {
 memberPassword:{
   type: String,
   select: false,
-  required:true,
+  required: isLocalMember,
+},
+
+/** Google's `sub` claim: fixed for the life of the account, unlike an email. Never sent to clients. */
+googleId:{
+  type: String,
+  index: { unique:true, sparse: true},
+  select: false,
 },
 
 memberFullName:{

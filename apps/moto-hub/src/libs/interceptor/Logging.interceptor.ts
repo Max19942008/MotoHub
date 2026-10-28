@@ -51,7 +51,7 @@ export class LoggingInterceptor implements NestInterceptor {
    * tokens. Container logs outlive the request, so those values are masked
    * before anything is written.
    */
-  private static readonly SECRET_KEYS = ["memberPassword", "accessToken", "refreshToken", "authorization"];
+  private static readonly SECRET_KEYS = ["memberPassword", "accessToken", "refreshToken", "authorization", "code"];
 
   private stringify(context: ExecutionContext): string {
     return JSON.stringify(context, (key, value) =>

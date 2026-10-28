@@ -40,6 +40,7 @@ export class AuthService {
       payload[`${ele}`] = member[`${ele}`];
     });
     delete payload.memberPassword;
+    delete payload.googleId;
 
 
     return this.jwtService.signAsync(payload);

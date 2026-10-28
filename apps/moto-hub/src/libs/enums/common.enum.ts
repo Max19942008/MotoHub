@@ -13,6 +13,7 @@ export enum Message {
   NO_MEMBER_NICK = "No member with that member nick!",
   BLOCKED_USER = "You have been blocked!",
   WRONG_PASSWORD = "Wrong password, try again!",
+  USE_GOOGLE_LOGIN = "This account signs in with Google!",
   NOT_AUTHENTICATED = "You are not authenticated, please login first!",
   TOKEN_NOT_EXIST = "Bearer Token is not provided!",
   ONLY_SPECIFIC_ROLES_ALLOWED = "Allowed only for members with specific roles!",

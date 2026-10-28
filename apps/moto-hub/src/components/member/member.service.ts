@@ -80,6 +80,9 @@ export class MemberService {
       throw new ForbiddenException(Message.BLOCKED_USER);
     }
 
+    /** A Google member has no password — without this, bcrypt throws and the client sees a 500. */
+    if (!response.memberPassword) throw new UnauthorizedException(Message.USE_GOOGLE_LOGIN);
+
     const isMatch = await this.authService.comparePasswords(input.memberPassword, response.memberPassword);
 		if (!isMatch) throw new UnauthorizedException(Message.WRONG_PASSWORD);
 		const tokens = await this.authService.issueTokenPair(response);

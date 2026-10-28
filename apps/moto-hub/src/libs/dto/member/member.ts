@@ -22,13 +22,16 @@ export class Member {
   @Field(() => MemberAuthType)
   memberAuthType: MemberAuthType;
 
-  @Field(() => String)
-  memberPhone: string;
+  /** Google members have no phone. */
+  @Field(() => String, { nullable: true })
+  memberPhone?: string;
 
   @Field(() => String)
   memberNick: string;
 
   memberPassword?: string;
+
+  googleId?: string;
 
   @Field(() => String, { nullable: true })
   memberFullName?: string;
