@@ -56,7 +56,7 @@ export class NotificationService  {
 		}
 
 		// 2) External channels (Gmail + Telegram) — best-effort, never block the flow
-		const apiUrl = (process.env.API_PUBLIC_URL ?? 'http://159.223.61.65:4001').replace(/\/+$/, '');
+		const apiUrl = (process.env.IMAGE_BASE_URL ?? process.env.API_PUBLIC_URL ?? 'http://159.223.61.65:4001').replace(/\/+$/, '');
 		const frontUrl = (process.env.FRONTEND_URL ?? 'http://159.223.61.65:4000').replace(/\/+$/, '');
 		const dash = (v: any) => (v === undefined || v === null || v === '' ? '-' : v);
 		const priceStr = formatPrice(property.propertyPrice, property.propertyCurrency);
@@ -164,7 +164,7 @@ export class NotificationService  {
 			}).catch((err) => console.log('notifyAdminsPartInterest in-app err:', err?.message));
 		}
 
-		const apiUrl = (process.env.API_PUBLIC_URL ?? 'http://159.223.61.65:4001').replace(/\/+$/, '');
+		const apiUrl = (process.env.IMAGE_BASE_URL ?? process.env.API_PUBLIC_URL ?? 'http://159.223.61.65:4001').replace(/\/+$/, '');
 		const frontUrl = (process.env.FRONTEND_URL ?? 'http://159.223.61.65:4000').replace(/\/+$/, '');
 		const dash = (v: any) => (v === undefined || v === null || v === '' ? '-' : v);
 		const priceStr = formatPrice(part.partPrice, part.partCurrency);

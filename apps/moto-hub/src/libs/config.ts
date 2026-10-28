@@ -27,6 +27,7 @@ export const availablePartSorts = [
 import { v4 as uuidv4 } from 'uuid';
 import * as path from 'path';
 import * as fs from 'fs';
+import { v2 as cloudinary } from 'cloudinary';
 import { T } from './types/common';
 
 export const validMimeTypes = ['image/png', 'image/jpg', 'image/jpeg'];
@@ -49,6 +50,37 @@ export const ensureUploadDir = (target: string): string => {
 	const dir = path.join('uploads', target);
 	if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 	return dir;
+};
+
+/**
+ * Render's disk is wiped on every restart, so with CLOUDINARY_URL set images go
+ * to Cloudinary instead. The public_id mirrors the old relative path
+ * (`uploads/<target>/<uuid>`) and we still return `uploads/<target>/<uuid>.<ext>`,
+ * so stored values keep their shape and the frontend only swaps its base URL
+ * to `https://res.cloudinary.com/<cloud>/image/upload`.
+ * Without CLOUDINARY_URL (local dev) files are written to ./uploads as before.
+ */
+export const saveImage = async (stream: NodeJS.ReadableStream, target: string, filename: string): Promise<string> => {
+	const imageName = getSerialForImage(filename);
+
+	if (!process.env.CLOUDINARY_URL) {
+		const url = `${ensureUploadDir(target)}/${imageName}`;
+		await new Promise<void>((resolve, reject) => {
+			stream.pipe(fs.createWriteStream(url)).on('finish', resolve).on('error', reject);
+		});
+		return url;
+	}
+
+	const url = path.posix.join('uploads', target, imageName);
+	const publicId = url.slice(0, -path.extname(url).length || undefined);
+	await new Promise((resolve, reject) => {
+		const upload = cloudinary.uploader.upload_stream(
+			{ public_id: publicId, resource_type: 'image', overwrite: false },
+			(err, res) => (err ? reject(err) : resolve(res)),
+		);
+		stream.on('error', reject).pipe(upload);
+	});
+	return url;
 };
 
 export const shapeIntoMongoObjectId = (target: any) => {
