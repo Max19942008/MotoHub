@@ -16,8 +16,15 @@ export class GeminiClient {
 	private client?: GoogleGenAI;
 
 	readonly chatModel = process.env.AI_MODEL || 'gemini-flash-latest';
-	/** Used when the main model is overloaded (503) or out of free quota (429). */
-	readonly fallbackChatModel = process.env.AI_FALLBACK_MODEL || 'gemini-flash-lite-latest';
+	/**
+	 * Tried in order when the main model is overloaded (503), out of free quota (429) or slow.
+	 * Free-tier capacity differs per model and changes by the hour, so a couple of lighter
+	 * models from separate pools make an answer far more likely. Comma-separated in env.
+	 */
+	readonly fallbackChatModels = (process.env.AI_FALLBACK_MODELS || 'gemini-flash-lite-latest,gemini-3.1-flash-lite')
+		.split(',')
+		.map((m) => m.trim())
+		.filter(Boolean);
 	readonly embeddingModel = process.env.AI_EMBEDDING_MODEL || 'gemini-embedding-001';
 	/** Must match the Atlas vector index; RagService updates the index if this changes. */
 	readonly dimensions = Number(process.env.AI_EMBEDDING_DIMS) || 768;

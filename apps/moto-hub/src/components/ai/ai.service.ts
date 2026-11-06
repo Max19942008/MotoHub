@@ -14,7 +14,7 @@ How to answer:
 - State prices, years, mileage and specs exactly as listed. Never invent listings, prices, sellers or contact details.
 - If nothing fits well, say so plainly and suggest how to widen the search (another region, higher budget, a similar brand). You may still mention the closest matches.
 - General riding or maintenance questions: answer briefly from common knowledge, and cite community articles when they help.
-- Always reply in the same language as the user's latest message (English question → English answer, Russian → Russian, Uzbek → Uzbek), whatever language earlier turns or the listings are in. Keep it short: a sentence of context, then the matches. Plain text; simple "-" lists are fine, no tables or headings.`;
+- Always reply in the same language as the user's latest message (English question → English answer, Russian → Russian, Uzbek → Uzbek in Latin script like the user writes, never Cyrillic), whatever language earlier turns or the listings are in. Keep it short: a sentence of context, then the matches. Plain text; simple "-" lists are fine, no tables or headings.`;
 
 /** Simple in-memory limiter; enough for one Render instance. */
 const WINDOW_MS = 10 * 60_000;
@@ -90,19 +90,29 @@ export class AiService {
 			if (n >= 1 && n <= retrieved.length && !cited.includes(n)) cited.push(n);
 		}
 
-		return { answer, sources: cited.map((n) => retrieved[n - 1].source) };
+		// Renumber citations to match the cards ([1] [3] [4] -> [1] [2] [3]); drop any the model made up.
+		const renumbered = answer
+			.replace(/\[(\d+)\]/g, (_, d) => {
+				const pos = cited.indexOf(Number(d));
+				return pos === -1 ? '' : `[${pos + 1}]`;
+			})
+			.replace(/ +([.,;:])/g, '$1');
+
+		return { answer: renumbered, sources: cited.map((n) => retrieved[n - 1].source) };
 	}
 
 	/**
-	 * Main model first; on overload, quota errors or a slow answer, the lighter fallback model.
-	 * When busy, Google can hold a request for up to a minute before returning 503, so the
-	 * main model gets a short deadline — a user is waiting on the other end.
+	 * Main model first, then the fallbacks in order, on overload, quota errors or a slow answer.
+	 * When busy, Google can hold a request for up to a minute before returning 503, so every
+	 * model gets a deadline — a user is waiting on the other end.
 	 */
 	private async generate(contents: Content[]) {
-		const models = [...new Set([this.gemini.chatModel, this.gemini.fallbackChatModel])];
+		const models = [...new Set([this.gemini.chatModel, ...this.gemini.fallbackChatModels])];
 		const primaryTimeoutMs = Number(process.env.AI_PRIMARY_TIMEOUT_MS) || 15_000;
 		for (let i = 0; ; i++) {
 			const isLast = i === models.length - 1;
+			// The light fallbacks answer in a second or two when they have capacity.
+			const timeoutMs = i === 0 ? primaryTimeoutMs : isLast ? 30_000 : 12_000;
 			try {
 				return await this.gemini.ai.models.generateContent({
 					model: models[i],
@@ -110,14 +120,17 @@ export class AiService {
 					config: {
 						systemInstruction: SYSTEM_PROMPT,
 						maxOutputTokens: 4096,
-						abortSignal: isLast ? undefined : AbortSignal.timeout(primaryTimeoutMs),
+						abortSignal: AbortSignal.timeout(timeoutMs),
 					},
 				});
 			} catch (err) {
 				const timedOut = err?.name === 'AbortError' || err?.name === 'TimeoutError';
 				const overloaded = timedOut || (err instanceof ApiError && (err.status === 429 || err.status >= 500));
-				if (!overloaded || isLast) throw err;
-				const reason = timedOut ? `no answer in ${primaryTimeoutMs / 1000}s` : `returned ${(err as ApiError).status}`;
+				if (!overloaded || isLast) {
+					if (timedOut) throw new ApiError({ message: 'all Gemini models timed out', status: 503 });
+					throw err;
+				}
+				const reason = timedOut ? `no answer in ${timeoutMs / 1000}s` : `returned ${(err as ApiError).status}`;
 				this.logger.warn(`${models[i]} ${reason}, falling back to ${models[i + 1]}`);
 			}
 		}
