@@ -11,6 +11,7 @@ import { NotificationModule } from './notification/notification.module';
 import { PartModule } from './part/part.module';
 import { ReportModule } from './report/report.module';
 import { GoogleAuthModule } from './google-auth/google-auth.module';
+import { AiModule } from './ai/ai.module';
 
 
 @Module({
@@ -26,7 +27,8 @@ import { GoogleAuthModule } from './google-auth/google-auth.module';
     NotificationModule,
     PartModule,
     ReportModule,
-    GoogleAuthModule],
+    GoogleAuthModule,
+    AiModule],
   providers: []
 })
 export class ComponentsModule {}
