@@ -1,118 +1,126 @@
 import { Logger } from '@nestjs/common';
-import { OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
+import { OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server } from 'ws';
-import * as WebSocket from "ws";
+import * as WebSocket from 'ws';
+import * as url from 'url';
 import { AuthService } from '../components/auth/auth.service';
 import { Member } from '../libs/dto/member/member';
-import * as url from "url"; 
+
+/** What other chat users get to see about a sender — never the whole token payload. */
+interface ChatMember {
+	_id: string;
+	memberNick: string;
+	memberImage?: string;
+	memberType?: string;
+}
 
 interface MessagePayload {
-  event: string;
-  text: string;
-  membeData: Member;
+	event: 'message';
+	text: string;
+	memberData: ChatMember | null;
+	createdAt: string;
 }
 
-interface InfoPayload{
-  event: string;
-  totalClients: number;
-  memberData: Member;
-  action: string;
+interface InfoPayload {
+	event: 'info';
+	totalClients: number;
+	memberData: ChatMember | null;
+	action: 'joined' | 'left';
 }
+
+const HISTORY_SIZE = 20;
+const MAX_TEXT_LENGTH = 500;
 
 @WebSocketGateway({ transports: ['websocket'], secure: false })
-export class SocketGateway implements OnGatewayInit {
-  private logger: Logger = new Logger('SocketEventsGateWay');
-  private summeryClient: number = 0 ;
-  private clientsAuthMap = new Map<WebSocket, Member>();
-  private messageList:MessagePayload[] = [];
+export class SocketGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
+	private logger: Logger = new Logger('SocketEventsGateWay');
+	private clientsAuthMap = new Map<WebSocket, ChatMember | null>();
+	private messageList: MessagePayload[] = [];
 
-  constructor(private authService: AuthService) {}
+	constructor(private authService: AuthService) {}
 
-  @WebSocketServer()
-  server: Server;
+	@WebSocketServer()
+	server: Server;
 
+	public afterInit() {
+		this.logger.verbose('WebSocket Server Initialized');
+	}
 
-  public afterInit(server: Server) {
-    this.logger.verbose(`WebSocket Server Initialized total [${this.summeryClient}]`)
-  }
+	private async retrieveAuth(req: any): Promise<ChatMember | null> {
+		try {
+			const { token } = url.parse(req.url, true).query;
+			if (!token || typeof token !== 'string') return null;
+			const member: Member = await this.authService.verifyToken(token);
+			if (!member) return null;
+			return {
+				_id: String(member._id),
+				memberNick: member.memberNick,
+				memberImage: member.memberImage,
+				memberType: member.memberType,
+			};
+		} catch (err) {
+			return null;
+		}
+	}
 
-  private async retrieveAuth (req: any): Promise<Member> {
-    try {
-    const parseUrl = url.parse(req.url, true);
-    const {token} = parseUrl.query;
-    console.log("token:", token);
-    return await this.authService.verifyToken(token as string) 
-    } catch (err) {
-      return null;
-    }
-  }
+	/** Counted from the live socket set, so it cannot drift the way a ++/-- counter can. */
+	private get totalClients(): number {
+		return this.clientsAuthMap.size;
+	}
 
+	public async handleConnection(client: WebSocket, req: any) {
+		const authMember = await this.retrieveAuth(req);
+		this.clientsAuthMap.set(client, authMember);
 
-  public async handleConnection(client: WebSocket, req: any) {
-    const authMember = await this.retrieveAuth(req);
-      this.summeryClient++;
-    this.clientsAuthMap.set(client, authMember);
+		this.logger.verbose(`Connection [${authMember?.memberNick ?? 'Guest'}] & Total [${this.totalClients}]`);
 
-    const clientNick:string = authMember?.memberNick ?? "Guest";
-    this.logger.verbose(`Connection [${clientNick}] & Total [${this.summeryClient}]`);
+		this.emitMessage({ event: 'info', totalClients: this.totalClients, memberData: authMember, action: 'joined' });
+		client.send(JSON.stringify({ event: 'getMessages', list: this.messageList }));
+	}
 
-    const infoMsg: InfoPayload = {
-      event: "info",
-      totalClients:this.summeryClient,
-      memberData: authMember,
-      action: "joined",
-    };
+	public handleDisconnect(client: WebSocket) {
+		const authMember = this.clientsAuthMap.get(client) ?? null;
+		this.clientsAuthMap.delete(client);
 
-    this.emitMessage(infoMsg);
-    client.send(JSON.stringify({event: "getMessages", list: this.messageList}));
-  }
+		this.logger.verbose(`DisConnection [${authMember?.memberNick ?? 'Guest'}] & Total [${this.totalClients}]`);
 
-  public  handleDisconnect(client: WebSocket) {
-    const authMember = this.clientsAuthMap.get(client);
-    this.summeryClient--;
-    this.clientsAuthMap.delete(client);
+		this.broadcastMessage(client, { event: 'info', totalClients: this.totalClients, memberData: authMember, action: 'left' });
+	}
 
-    const clientNick:string = authMember?.memberNick ?? "Guest";
-    this.logger.verbose(`DisConnection [${clientNick}] & Total [${this.summeryClient}]`);
+	@SubscribeMessage('message')
+	public async handleMessage(client: WebSocket, payload: unknown): Promise<void> {
+		const text = typeof payload === 'string' ? payload.trim().slice(0, MAX_TEXT_LENGTH) : '';
+		if (!text) return;
 
-    const infoMsg: InfoPayload = {
-      event: "info",
-      totalClients:this.summeryClient,
-      memberData: authMember,
-      action: "left",
-    };
+		const authMember = this.clientsAuthMap.get(client) ?? null;
+		const newMessage: MessagePayload = {
+			event: 'message',
+			text,
+			memberData: authMember,
+			createdAt: new Date().toISOString(),
+		};
 
-    this.broadcastMessage(client, infoMsg);
-  }
+		this.logger.verbose(`NEW MESSAGE [${authMember?.memberNick ?? 'Guest'}] ${text}`);
 
-  @SubscribeMessage('message')
-   public async handleMessage(client: WebSocket, payload: string): Promise<void> {
-    const authMember = this.clientsAuthMap.get(client);
-    const newMessage: MessagePayload = {event:"message", text: payload, membeData: authMember};
-    
-    const clientNick:string = authMember?.memberNick ?? "Guest";
-    this.logger.verbose(`NEW MESSAGE [${clientNick}] ${payload}`);
+		this.messageList.push(newMessage);
+		if (this.messageList.length > HISTORY_SIZE) this.messageList.splice(0, this.messageList.length - HISTORY_SIZE);
 
-    this.messageList.push(newMessage);
-    if(this.messageList.length > 5) this.messageList.splice(0, this.messageList.length - 5);
+		this.emitMessage(newMessage);
+	}
 
-    this.emitMessage(newMessage);
-  }
+	private broadcastMessage(sender: WebSocket, message: InfoPayload | MessagePayload) {
+		this.server.clients.forEach((client) => {
+			if (client !== sender && client.readyState === WebSocket.OPEN) {
+				client.send(JSON.stringify(message));
+			}
+		});
+	}
 
-  private broadcastMessage(sender: WebSocket, message: InfoPayload | MessagePayload) {
-    this.server.clients.forEach((client) => {
-      if (client !== sender && client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify(message))
-      }
-    });
-  }
-
-  private emitMessage ( message: InfoPayload | MessagePayload ) {
-    this.server.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify(message))
-      }
-    });
-  }
+	private emitMessage(message: InfoPayload | MessagePayload) {
+		this.server.clients.forEach((client) => {
+			if (client.readyState === WebSocket.OPEN) {
+				client.send(JSON.stringify(message));
+			}
+		});
+	}
 }
- 
