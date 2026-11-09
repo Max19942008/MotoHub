@@ -1,0 +1,13 @@
+{$DOMAIN} {
+	encode gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options nosniff
+		-Server
+	}
+	request_body {
+		max_size 160MB
+	}
+	# HTTP, GraphQL and the WebSocket chat all go to the Nest app
+	reverse_proxy api:3007
+}

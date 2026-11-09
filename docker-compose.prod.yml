@@ -1,0 +1,57 @@
+# Production stack for the VPS:  docker compose -f docker-compose.prod.yml up -d --build
+# Secrets live in .env next to this file (never committed).
+services:
+  api:
+    build: .
+    image: motohub:latest
+    container_name: motohub-api
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      PORT_API: "3007"
+      FRONTEND_URL: ${FRONTEND_URL_PROD:-https://ignition-plum.vercel.app}
+      GOOGLE_REDIRECT_URI: https://${DOMAIN}/auth/google/callback
+    volumes:
+      - ./uploads:/app/uploads
+    # not published to the host: only Caddy reaches it over the compose network
+    expose:
+      - "3007"
+    mem_limit: 1536m
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+  # Nightly ranking jobs. Never ran on Render; start only on purpose:
+  #   docker compose -f docker-compose.prod.yml --profile batch up -d
+  batch:
+    image: motohub:latest
+    container_name: motohub-batch
+    profiles: ["batch"]
+    restart: unless-stopped
+    command: ["node", "dist/apps/motohub-batch/main.js"]
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      PORT_BATCH: "3008"
+    depends_on: [api]
+    mem_limit: 512m
+
+  caddy:
+    image: caddy:2
+    container_name: motohub-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on: [api]
+
+volumes:
+  caddy_data:
+  caddy_config:
