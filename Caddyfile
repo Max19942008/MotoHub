@@ -21,3 +21,8 @@
 	import common
 	reverse_proxy ignition-web:3000
 }
+
+# www -> bare domain
+www.{$FRONTEND_DOMAIN} {
+	redir https://{$FRONTEND_DOMAIN}{uri} permanent
+}
