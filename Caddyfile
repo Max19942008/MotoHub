@@ -1,13 +1,23 @@
-{$DOMAIN} {
+(common) {
 	encode gzip
 	header {
 		Strict-Transport-Security "max-age=31536000"
 		X-Content-Type-Options nosniff
 		-Server
 	}
+}
+
+# Backend API: HTTP, GraphQL, uploads and the WebSocket chat
+{$DOMAIN} {
+	import common
 	request_body {
 		max_size 160MB
 	}
-	# HTTP, GraphQL and the WebSocket chat all go to the Nest app
 	reverse_proxy api:3007
+}
+
+# Frontend (ignition repo, container ignition-web on the same network)
+{$FRONTEND_DOMAIN} {
+	import common
+	reverse_proxy ignition-web:3000
 }

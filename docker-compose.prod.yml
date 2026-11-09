@@ -10,7 +10,7 @@ services:
     environment:
       NODE_ENV: production
       PORT_API: "3007"
-      FRONTEND_URL: ${FRONTEND_URL_PROD:-https://ignition-plum.vercel.app}
+      FRONTEND_URL: https://${FRONTEND_DOMAIN}
       GOOGLE_REDIRECT_URI: https://${DOMAIN}/auth/google/callback
     volumes:
       - ./uploads:/app/uploads
@@ -46,6 +46,7 @@ services:
       - "443:443"
     environment:
       DOMAIN: ${DOMAIN}
+      FRONTEND_DOMAIN: ${FRONTEND_DOMAIN}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
