@@ -2,8 +2,10 @@ import { BadRequestException, Injectable, Logger, ServiceUnavailableException } 
 import { ApiError, Content, FinishReason } from '@google/genai';
 import { RagService, RetrievedDoc } from './rag.service';
 import { GeminiClient } from './gemini.client';
-import { AiChatInput } from '../../libs/dto/ai/ai.input';
-import { AiChatResponse, AiReindexResult } from '../../libs/dto/ai/ai';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { AiChatInput, AiReportInput } from '../../libs/dto/ai/ai.input';
+import { AiChatResponse, AiReindexResult, AiReport } from '../../libs/dto/ai/ai';
 
 const SYSTEM_PROMPT = `You are MotoHub Assistant, the shopping helper on MotoHub — a marketplace in Uzbekistan for motorcycles, spare parts and accessories, with a rider community board.
 
@@ -28,7 +30,35 @@ export class AiService {
 	constructor(
 		private readonly rag: RagService,
 		private readonly gemini: GeminiClient,
+		@InjectModel('AiReport') private readonly reportModel: Model<any>,
 	) {}
+
+	/** Store a user's complaint about an answer; admins review them via getAiReports. */
+	async report(input: AiReportInput, requesterKey: string, memberId: string | null): Promise<boolean> {
+		this.checkRate(`report:${requesterKey}`);
+		await this.reportModel.create({
+			memberId: memberId ?? null,
+			requester: requesterKey,
+			reason: input.reason,
+			comment: (input.comment ?? '').trim(),
+			question: input.question,
+			answer: input.answer,
+			platform: input.platform ?? 'unknown',
+		});
+		this.logger.warn(`AI answer reported (${input.reason}) by ${requesterKey}`);
+		return true;
+	}
+
+	async listReports(status?: string): Promise<AiReport[]> {
+		const filter = status ? { status } : {};
+		const docs = await this.reportModel.find(filter).sort({ createdAt: -1 }).limit(100).lean().exec();
+		return docs.map((d: any) => ({ ...d, _id: String(d._id), memberId: d.memberId ? String(d.memberId) : null }));
+	}
+
+	async markReportReviewed(id: string): Promise<boolean> {
+		const res = await this.reportModel.updateOne({ _id: id }, { status: 'REVIEWED' }).exec();
+		return res.matchedCount > 0;
+	}
 
 	async chat(input: AiChatInput, requesterKey: string): Promise<AiChatResponse> {
 		if (!this.gemini.enabled) {

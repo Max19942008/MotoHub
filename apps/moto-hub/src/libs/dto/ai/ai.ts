@@ -54,3 +54,33 @@ export class AiReindexResult {
 	@Field(() => Boolean)
 	vectorSearch: boolean;
 }
+
+@ObjectType()
+export class AiReport {
+	@Field(() => String)
+	_id: string;
+
+	@Field(() => String, { nullable: true })
+	memberId?: string;
+
+	@Field(() => String)
+	reason: string;
+
+	@Field(() => String, { nullable: true })
+	comment?: string;
+
+	@Field(() => String)
+	question: string;
+
+	@Field(() => String)
+	answer: string;
+
+	@Field(() => String, { nullable: true })
+	platform?: string;
+
+	@Field(() => String)
+	status: string;
+
+	@Field(() => Date)
+	createdAt: Date;
+}
