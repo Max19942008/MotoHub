@@ -26,3 +26,6 @@
 www.{$FRONTEND_DOMAIN} {
 	redir https://{$FRONTEND_DOMAIN}{uri} permanent
 }
+
+# Other projects on this VPS add their own site files here (e.g. chess.caddy)
+import /etc/caddy/sites/*.caddy

@@ -47,8 +47,10 @@ services:
     environment:
       DOMAIN: ${DOMAIN}
       FRONTEND_DOMAIN: ${FRONTEND_DOMAIN}
+      CHESS_DOMAIN: ${CHESS_DOMAIN:-}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./caddy-sites:/etc/caddy/sites:ro
       - caddy_data:/data
       - caddy_config:/config
     depends_on: [api]
